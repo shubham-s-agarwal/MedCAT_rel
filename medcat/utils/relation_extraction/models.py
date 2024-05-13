@@ -6,6 +6,9 @@ from transformers.models.bert.modeling_bert import BertPreTrainingHeads, BertMod
 from transformers.models.bert.configuration_bert import BertConfig
 from medcat.config_rel_cat import ConfigRelCAT
 from transformers import AutoConfig, LlamaModel
+import os
+
+os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
 
 
 class BertModel_RelationExtraction(nn.Module):
@@ -252,7 +255,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B", token='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')
 
         self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",
-                                                     token='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',config=model_config,ignore_mismatched_sizes=True)
+                                                     token='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',config=model_config,ignore_mismatched_sizes=True, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
 
         # if pretrained_model_name_or_path != "":
         #     self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
