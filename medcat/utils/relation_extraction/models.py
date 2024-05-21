@@ -396,6 +396,7 @@ class LlamaModel_RelationExtraction(nn.Module):
             del temp_e1
 
         x = self.drop_out(new_pooled_output)
+        print("Going to FC",x.shape)
         x = self.fc1(x)
         x = self.drop_out(x)
         x = self.fc2(x)
