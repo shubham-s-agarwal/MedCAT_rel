@@ -372,8 +372,9 @@ class LlamaModel_RelationExtraction(nn.Module):
                     sequence_output, input_ids, each_tags))
 
             seq_tags = torch.stack(seq_tags, dim=0)
-            new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
+            # new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
             # print("SEQ TAGS",seq_tags.shape)
+            new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
 
             # new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
         else:
@@ -440,7 +441,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         # print("model_output",model_output)
         # (batch_size, sequence_length, hidden_size)
         sequence_output = model_output.hidden_states[-1]
-        pooled_output = to_append, _ = torch.max(model_output.hidden_states[-1], axis=0) #??
+        pooled_output,_ = torch.max(model_output.hidden_states[-1], dim=1) #??
         # print("SEQUENCE OUTPUT",sequence_output.shape)
 
         classification_logits = self.output2logits(
