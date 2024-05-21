@@ -397,8 +397,8 @@ class RelCAT(PipeRunner):
 
                 pbar.update(current_batch_size)
 
-                print("Accuracy:",accuracy_score(labels.squeeze(1), np.argmax(classification_logits.detach().cpu().numpy(), axis=1)))
-                print("F1-score",f1_score(labels.squeeze(1), np.argmax(classification_logits.detach().cpu().numpy(), axis=1),average='weighted'))
+                print("Accuracy:",accuracy_score(labels.squeeze(1), np.argmax(classification_logits.cpu().numpy(), axis=1)))
+                print("F1-score",f1_score(labels.squeeze(1), np.argmax(classification_logits.cpu().numpy(), axis=1),average='weighted'))
             pbar.close()
 
             if len(loss_per_batch) > 0:
