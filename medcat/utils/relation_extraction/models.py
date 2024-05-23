@@ -252,6 +252,7 @@ class LlamaModel_RelationExtraction(nn.Module):
 
         self.relcat_config: ConfigRelCAT = relcat_config
         self.model_config: BertConfig = model_config
+        self.config = model_config
         # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B", token='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')
 
         self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",
