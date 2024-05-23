@@ -62,7 +62,7 @@ class RelCAT(PipeRunner):
 
         self.is_cuda_available = torch.cuda.is_available()
         self.device = torch.device(
-            "cuda" if self.is_cuda_available and self.config.general.device != "cpu" else "cpu")
+            "cuda:0" if self.is_cuda_available and self.config.general.device != "cpu" else "cpu")
 
         self.model_config = BertConfig()
         self.model: BertModel_RelationExtraction
