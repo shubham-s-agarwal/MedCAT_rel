@@ -3,14 +3,14 @@
     Your task is to assess intent and categorize the input 
     text after <<<>>> into one of the following predefined categories:
 
-    2: Experiencer - Patient / default
-    1: Experiencer - Family
-    0: Not applicable
+    2: Presence - Present / default
+    1: Presence - Hypothetical / not applicable
+    0: Not present
 
     Explanation of labels:
-    Label 2 (patient / default) is the class where the context strongly indicates that the given medical entity is for the patient. The text will not explicitly contain mention that it is for the patient, you have to infer it.  
-    Label 1 (family) is the class where the context clearly indicates that the given medical entity is for the family.
-    Label 0 (not applicable) is when the input data does is not applicable to the category.
+    Label 2 (present / default) is the class where the context strongly indicates that the given medical entity is present. The text will not explicitly contain mention that it is present, you have to infer it.  
+    Label 1 (hypothetical) is the class where the context clearly indicates that the given medical entity is not applicable / hypothetical.
+    Label 0 (not present) is when the context clearly indicates that the given medical entity is not present
     
     You will only respond with the predefined category. 
     Do not provide explanations or notes. 
