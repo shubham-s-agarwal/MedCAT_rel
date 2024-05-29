@@ -59,7 +59,7 @@ def split_list_train_test_by_class(data: List, test_size: float = 0.2, shuffle: 
 def load_bin_file(file_name, path="./") -> Any:
     with open(os.path.join(path, file_name), 'rb') as f:
         # data = pickle.load(f)
-        data = torch.load(f, map_location='cuda')
+        data = torch.load(f, map_location='cuda:0')
 
     return data
 

@@ -8,7 +8,7 @@ from medcat.config_rel_cat import ConfigRelCAT
 from transformers import AutoConfig, LlamaModel
 import os
 
-os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
+# os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
 
 
 class BertModel_RelationExtraction(nn.Module):
@@ -217,6 +217,9 @@ class BertModel_RelationExtraction(nn.Module):
         sequence_output = model_output[0]
         pooled_output = model_output[1]
 
+        print("\nInput shape", input_ids.shape)
+        print("Hidden state shape", sequence_output.shape)
+
         ### Alternate approach for pooling
         # Max pooling last hidden layer
         pooled_output,_ = torch.max(sequence_output,dim=1)
@@ -256,7 +259,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B", token='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')
 
         self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",
-                                                     token='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',config=model_config,ignore_mismatched_sizes=True, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
+                                                     token='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',config=model_config,ignore_mismatched_sizes=True)#, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
 
         # if pretrained_model_name_or_path != "":
         #     self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
@@ -446,8 +449,11 @@ class LlamaModel_RelationExtraction(nn.Module):
         model_output = self.llama_model(input_ids=input_ids, attention_mask=attention_mask,output_hidden_states=True)
         # print("model_output",model_output)
         # (batch_size, sequence_length, hidden_size)
+
         sequence_output = model_output.hidden_states[-1]
         pooled_output,_ = torch.max(model_output.hidden_states[-1], dim=1) #??
+        pooled_output = torch.max(model_output.hidden_states[0][:,4,:])
+        print("pooled_output",pooled_output.shape)
         # print("SEQUENCE OUTPUT",sequence_output.shape)
 
         classification_logits = self.output2logits(
