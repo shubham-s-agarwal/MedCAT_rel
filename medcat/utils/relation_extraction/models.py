@@ -377,12 +377,10 @@ class LlamaModel_RelationExtraction(nn.Module):
             seq_tags = torch.stack(seq_tags, dim=0)
             # new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
             new_pooled_output = torch.reshape(seq_tags, (seq_tags.shape[1], -1))
-            print("SEQ TAGS",seq_tags.shape)
-            print("new_pooled_output", new_pooled_output.shape)
+            # print("SEQ TAGS",seq_tags.shape)
+            # print("new_pooled_output", new_pooled_output.shape)
 
-            # new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
-
-            # new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
+            new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
         else:
             e1e2_output = []
             temp_e1 = []
@@ -455,7 +453,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         sequence_output = model_output.hidden_states[-1]
         pooled_output,_ = torch.max(model_output.hidden_states[-1], dim=1) #??
 
-        pooled_output = model_output.hidden_states[0][:,4,:]
+        pooled_output = model_output.hidden_states[1][:,2,:]
         # print("pooled_output",pooled_output.shape)
         # print("SEQUENCE OUTPUT",sequence_output.shape)
 
