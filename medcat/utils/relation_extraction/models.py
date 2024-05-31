@@ -375,7 +375,8 @@ class LlamaModel_RelationExtraction(nn.Module):
                     sequence_output, input_ids, each_tags))
 
             seq_tags = torch.stack(seq_tags, dim=0)
-            new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
+            # new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
+            new_pooled_output = torch.reshape(seq_tags, (seq_tags.shape[1], -1))
             print("SEQ TAGS",seq_tags.shape)
             print("new_pooled_output", new_pooled_output.shape)
 
