@@ -455,7 +455,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         pooled_output,_ = torch.max(model_output.hidden_states[-1], dim=1) #??
 
         pooled_output = model_output.hidden_states[0][:,4,:]
-        print("pooled_output",pooled_output.shape)
+        # print("pooled_output",pooled_output.shape)
         # print("SEQUENCE OUTPUT",sequence_output.shape)
 
         classification_logits = self.output2logits(
