@@ -7,8 +7,7 @@ from transformers.models.bert.configuration_bert import BertConfig
 from medcat.config_rel_cat import ConfigRelCAT
 from transformers import AutoConfig, LlamaModel
 import os
-
-# os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
+os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
 
 
 class BertModel_RelationExtraction(nn.Module):
@@ -259,7 +258,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B", token='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')
 
         self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",
-                                                     token='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',config=model_config,ignore_mismatched_sizes=True)#, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
+                                                     token='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',config=model_config,ignore_mismatched_sizes=True, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
 
         # if pretrained_model_name_or_path != "":
         #     self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
@@ -376,9 +375,11 @@ class LlamaModel_RelationExtraction(nn.Module):
                     sequence_output, input_ids, each_tags))
 
             seq_tags = torch.stack(seq_tags, dim=0)
-            # new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
-            # print("SEQ TAGS",seq_tags.shape)
-            new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
+            new_pooled_output = seq_tags.view(seq_tags.shape[1], -1)
+            print("SEQ TAGS",seq_tags.shape)
+            print("new_pooled_output", new_pooled_output.shape)
+
+            # new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
 
             # new_pooled_output = torch.cat((pooled_output, *seq_tags), dim=1)
         else:
