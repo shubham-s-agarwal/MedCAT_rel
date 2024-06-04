@@ -22,7 +22,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 #print("model loaded, moving to GPU")
 #model = model.to(device)
-tokenizer = AutoTokenizer.from_pretrained(model_path_hf,token='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')
+tokenizer = AutoTokenizer.from_pretrained(model_path_hf)
 
 from transformers import pipeline
 from langchain.llms import HuggingFacePipeline
