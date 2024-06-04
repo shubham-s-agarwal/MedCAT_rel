@@ -301,8 +301,8 @@ class RelCAT(PipeRunner):
         test_dataloader = DataLoader(test_rel_data, batch_size=test_batch_size, shuffle=self.config.train.shuffle_data,
                                      num_workers=0, collate_fn=self.padding_seq,
                                      pin_memory=self.config.general.pin_memory)
-
-        criterion = nn.CrossEntropyLoss(ignore_index=-1,weight=class_weights)
+        class_weights = torch.FloatTensor(class_weights).to(self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights,ignore_index=-1)
 
         if self.optimizer is None:
             parameters = filter(lambda p: p.requires_grad, self.model.parameters())
