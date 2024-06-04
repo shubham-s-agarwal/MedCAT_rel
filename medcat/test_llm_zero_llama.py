@@ -3,7 +3,6 @@ from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 import torch
 
-# os.environ['TRANSFORMERS_CACHE'] = '/scratch/users/k2370999/huggingface_models/cache/'
 torch.cuda.empty_cache()
 is_cuda_available = torch.cuda.is_available()
 device = torch.device(
@@ -13,16 +12,14 @@ device = torch.device(
 model_path_hf = model_path_hf = "mistralai/Mistral-7B-Instruct-v0.2"
 model_path_hf = "meta-llama/Meta-Llama-3-8B-Instruct"
 
-
 model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=model_path_hf,
        #     device_map='cuda',
-            token = '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',
             torch_dtype=torch.float16)
 
 #print("model loaded, moving to GPU")
 #model = model.to(device)
-tokenizer = AutoTokenizer.from_pretrained(model_path_hf,token='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')
+tokenizer = AutoTokenizer.from_pretrained(model_path_hf)
 
 from transformers import pipeline
 from langchain.llms import HuggingFacePipeline
