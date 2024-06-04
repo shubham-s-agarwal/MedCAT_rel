@@ -12,12 +12,11 @@ model_path_hf = "mistralai/Mistral-7B-Instruct-v0.2"
 
 model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=model_path_hf,
-            token = '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',
             torch_dtype=torch.float16
             )
 
 # model = model.to(device)
-tokenizer = AutoTokenizer.from_pretrained(model_path_hf,token='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')
+tokenizer = AutoTokenizer.from_pretrained(model_path_hf)
 
 from transformers import pipeline
 from langchain.llms import HuggingFacePipeline
