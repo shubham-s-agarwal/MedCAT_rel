@@ -256,7 +256,7 @@ class RelCAT(PipeRunner):
 
         return train_data, test_data
 
-    def train(self, export_data_path:str = "", train_csv_path:str = "", test_csv_path:str = "", checkpoint_path: str = "./"):
+    def train(self, export_data_path:str = "", train_csv_path:str = "", test_csv_path:str = "", checkpoint_path: str = "./",class_weights=None):
 
         if self.is_cuda_available:
             self.log.info("Training on device:",
@@ -302,7 +302,7 @@ class RelCAT(PipeRunner):
                                      num_workers=0, collate_fn=self.padding_seq,
                                      pin_memory=self.config.general.pin_memory)
 
-        criterion = nn.CrossEntropyLoss(ignore_index=-1)
+        criterion = nn.CrossEntropyLoss(ignore_index=-1,weight=class_weights)
 
         if self.optimizer is None:
             parameters = filter(lambda p: p.requires_grad, self.model.parameters())
