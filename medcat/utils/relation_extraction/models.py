@@ -39,7 +39,7 @@ class BertModel_RelationExtraction(nn.Module):
             self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
 
         for param in self.bert_model.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
 
         self.drop_out = nn.Dropout(self.model_config.hidden_dropout_prob)
 
@@ -264,7 +264,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         #     self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
 
         for param in self.llama_model.parameters():
-            param.requires_grad = True
+            param.requires_grad = False
 
         self.drop_out = nn.Dropout(self.relcat_config.model.dropout)
 
