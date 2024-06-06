@@ -31,8 +31,8 @@ class General(MixingConfig, BaseModel):
     annotation_schema_tag_ids: List = []
     """If a foreign non-MCAT trainer dataset is used, you can insert your own Rel entity token delimiters into the tokenizer, \
     copy those token IDs here, and also resize your tokenizer embeddings and adjust the hidden_size of the model, this will depend on the number of tokens you introduce"""
-    labels2idx: Dict = {}
-    idx2labels: Dict = {}
+    labels2idx: Dict = {'Reason-Drug':0, 'Duration-Drug' :1, 'ADE-Drug' :2, 'Dosage-Drug': 3, 'Strength-Drug' :4, 'NonRel' :5, 'Route-Drug' :6, 'Frequency-Drug' :7, 'Form-Drug' :8}
+    idx2labels: Dict = {0: 'Reason-Drug', 1: 'Duration-Drug', 2: 'ADE-Drug', 3: 'Dosage-Drug', 4: 'Strength-Drug', 5: 'NonRel', 6: 'Route-Drug', 7: 'Frequency-Drug', 8: 'Form-Drug'}
     pin_memory: bool = True
     seed: int = 13
     task: str = "train"
