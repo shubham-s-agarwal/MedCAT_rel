@@ -216,13 +216,9 @@ class BertModel_RelationExtraction(nn.Module):
         sequence_output = model_output[0]
         pooled_output = model_output[1]
 
-        print("\nInput shape", input_ids.shape)
-        print("Hidden state shape", sequence_output.shape)
-
         ### Alternate approach for pooling
         # Max pooling last hidden layer
-        pooled_output,_ = torch.max(sequence_output,dim=1)
-        print("POOLED OUTPUT",pooled_output.shape)
+        # pooled_output,_ = torch.max(sequence_output,dim=1)
         # Extracting last 4 [CLS] tokens
 
         classification_logits = self.output2logits(
