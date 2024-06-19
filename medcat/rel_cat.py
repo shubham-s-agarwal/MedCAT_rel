@@ -305,6 +305,7 @@ class RelCAT(PipeRunner):
         if class_weights is not None:
             class_weights = torch.FloatTensor(class_weights).to(self.device)
             criterion = nn.CrossEntropyLoss(weight=class_weights,ignore_index=-1)
+            print("Class weights configured!!!")
         else:
             criterion = nn.CrossEntropyLoss(ignore_index=-1)
 
