@@ -141,11 +141,13 @@ class RelData(Dataset):
             df["label"], self.config)
 
         output_relations = df.values.tolist()
+        # df.to_csv("/Users/k2370999/Downloads/Relation extraction/rel_dataset.csv")
 
         self.log.info("CSV dataset | No. of relations detected:" + str(len(output_relations)) +
                       "| from : " + csv_path + " | nclasses: " + str(nclasses) + " | idx2label: " + str(idx2label))
 
         self.log.info("Samples per class: ")
+        label_count_mapping = {}
         for label_num in list(idx2label.keys()):
             sample_count = 0
             for output_relation in output_relations:
@@ -154,11 +156,13 @@ class RelData(Dataset):
             self.log.info(
                 " label: " + idx2label[label_num] + " | samples: " + str(sample_count))
 
+            label_count_mapping[idx2label[label_num]] = sample_count
+
         # replace/update label_id with actual detected label number
         for idx in range(len(output_relations)):
             output_relations[idx][5] = labels2idx[output_relations[idx][4]]
 
-        return {"output_relations": output_relations, "nclasses": nclasses, "labels2idx": labels2idx, "idx2label": idx2label}
+        return {"output_relations": output_relations, "nclasses": nclasses, "labels2idx": labels2idx, "idx2label": idx2label},label_count_mapping
 
     def create_base_relations_from_doc(self, doc: Union[Doc, str], doc_id: str, ent1_ent2_tokens_start_pos: Union[List, Tuple] = (-1, -1)) -> Dict:
         """  Creates a list of tuples based on pairs of entities detected (relation, ent1, ent2) for one spacy document or text string.
@@ -693,7 +697,18 @@ class RelData(Dataset):
         Returns:
             Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor]: long tensors of the following the columns : input_ids, ent1&ent2 token start pos idx, label_ids
         """
+        if isinstance(idx, list):
+            to_return_1 = [torch.LongTensor(self.dataset['output_relations'][i][0]) for i in idx]
+            to_return_2 = [torch.LongTensor(self.dataset['output_relations'][i][1]) for i in idx]
+            to_return_3 = [torch.LongTensor([self.dataset['output_relations'][i][5]]) for i in idx]
+            print("TO RETURN 3",to_return_3)
+            print("Actual data",self.dataset['output_relations'][idx[0]],self.dataset['output_relations'][idx[1]])
+            main_return = [[to_return_1[i], to_return_2[i], to_return_3[i]] for i in range(len(to_return_1))]
 
-        return torch.LongTensor(self.dataset['output_relations'][idx][0]),\
-            torch.LongTensor(self.dataset['output_relations'][idx][1]),\
-            torch.LongTensor([self.dataset['output_relations'][idx][5]])
+            return main_return
+
+        else:
+
+            return torch.LongTensor(self.dataset['output_relations'][idx][0]),\
+                torch.LongTensor(self.dataset['output_relations'][idx][1]),\
+                torch.LongTensor([self.dataset['output_relations'][idx][5]])
