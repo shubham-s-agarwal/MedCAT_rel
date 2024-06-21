@@ -86,6 +86,7 @@ class BalancedBatchSampler(Sampler):
                 # print("Class vals", class_counts)
 
             yield batch
+            batch_counter += 1
 
 
 class RelCAT(PipeRunner):
