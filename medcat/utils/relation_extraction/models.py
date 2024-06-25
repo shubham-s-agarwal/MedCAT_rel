@@ -32,6 +32,7 @@ class BertModel_RelationExtraction(nn.Module):
 
         self.relcat_config: ConfigRelCAT = relcat_config
         self.model_config: BertConfig = model_config
+        self.config = model_config
 
         self.bert_model:BertModel = BertModel(config=model_config)
 
