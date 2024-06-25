@@ -182,7 +182,12 @@ class BertModel_RelationExtraction(nn.Module):
                 encoder_hidden_states: Any = None,
                 encoder_attention_mask: Any = None,
                 Q: Any = None,
+                labels: Optional[torch.LongTensor] = None,
+                output_attentions: Optional[bool] = None,
+                output_hidden_states: Optional[bool] = None,
+                inputs_embeds: Optional[torch.FloatTensor] = None,
                 e1_e2_start: Any = None,
+                return_dict: Optional[bool] = None,
                 pooled_output: Any = None) -> Tuple[torch.Tensor, torch.Tensor]:
 
         if input_ids is not None:
