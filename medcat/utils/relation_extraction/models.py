@@ -39,7 +39,7 @@ class BertModel_RelationExtraction(nn.Module):
             self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
 
         for param in self.bert_model.parameters():
-            param.requires_grad = True
+            param.requires_grad = False
 
         self.drop_out = nn.Dropout(self.model_config.hidden_dropout_prob)
 
@@ -53,7 +53,6 @@ class BertModel_RelationExtraction(nn.Module):
         self.fc1 = nn.Linear(self.relcat_config.model.model_size, self.relcat_config.model.hidden_size)
         self.fc2 = nn.Linear(self.relcat_config.model.hidden_size, int(self.relcat_config.model.hidden_size / 2))
         self.fc3 = nn.Linear(int(self.relcat_config.model.hidden_size / 2), self.relcat_config.train.nclasses)
-
         self.log.info("RelCAT BertConfig: " + str(self.model_config))
 
     def get_annotation_schema_tag(self, sequence_output: torch.Tensor, input_ids: torch.Tensor, special_tag: List) -> torch.Tensor:
