@@ -42,6 +42,12 @@ class BertModel_RelationExtraction(nn.Module):
         for param in self.bert_model.parameters():
             param.requires_grad = False
 
+        for param in self.bert_model.encoder.layer[-1].parameters():
+            param.requires_grad = True
+
+        for param in self.bert_model.encoder.layer[-2].parameters():
+            param.requires_grad = True
+
         self.drop_out = nn.Dropout(self.model_config.hidden_dropout_prob)
 
         if self.relcat_config.general.task == "pretrain":
@@ -211,7 +217,6 @@ class BertModel_RelationExtraction(nn.Module):
             self.relcat_config.general.device)
 
         self.bert_model = self.bert_model.to(self.relcat_config.general.device)
-
         model_output = self.bert_model(input_ids=input_ids, attention_mask=attention_mask,
                                        token_type_ids=token_type_ids,
                                        encoder_hidden_states=encoder_hidden_states,
