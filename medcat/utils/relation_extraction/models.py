@@ -45,9 +45,6 @@ class BertModel_RelationExtraction(nn.Module):
         for param in self.bert_model.encoder.layer[-1].parameters():
             param.requires_grad = True
 
-        for param in self.bert_model.encoder.layer[-2].parameters():
-            param.requires_grad = True
-
         self.drop_out = nn.Dropout(self.model_config.hidden_dropout_prob)
 
         if self.relcat_config.general.task == "pretrain":
