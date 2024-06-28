@@ -87,8 +87,8 @@ class BalancedBatchSampler(Sampler):
                     # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
                     if self.max_samples_per_class[label] > 25:
                         self.indices.remove(index)
-                # print("Class vals", class_counts)
-            # print("Yielding batch")
+                print("Class vals", class_counts)
+            print("Yielding batch")
             yield batch
             batch_counter += 1
 
