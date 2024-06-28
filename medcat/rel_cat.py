@@ -74,8 +74,10 @@ class BalancedBatchSampler(Sampler):
 
     def __iter__(self):
         batch_counter = 0
+        print("Starting new sampler...")
         while batch_counter != self.__len__():
             batch = []
+
             class_counts = {c: 0 for c in self.classes}
             while len(batch) < self.batch_size:
 
@@ -87,7 +89,7 @@ class BalancedBatchSampler(Sampler):
                     # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
                     if self.max_samples_per_class[label] > 25:
                         self.indices.remove(index)
-                print("Class vals", class_counts)
+                # print("Class vals", class_counts)
             print("Yielding batch")
             yield batch
             batch_counter += 1
