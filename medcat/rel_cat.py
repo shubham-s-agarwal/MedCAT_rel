@@ -74,6 +74,7 @@ class BalancedBatchSampler(Sampler):
 
     def __iter__(self):
         batch_counter = 0
+        self.indices = list(range(len(self.dataset)))
         print("Starting new sampler...")
         while batch_counter != self.__len__():
             batch = []
