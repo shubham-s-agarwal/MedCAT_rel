@@ -65,7 +65,8 @@ class BalancedBatchSampler(Sampler):
 
             diff = max(self.max_samples_per_class) - min(self.max_samples_per_class)
 
-        # print("Samples per class", self.max_samples_per_class)
+        self.max_samples_per_class = [9, 6, 5, 5, 9, 30]
+        print("Samples per class", self.max_samples_per_class)
     def __len__(self):
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
@@ -81,7 +82,8 @@ class BalancedBatchSampler(Sampler):
                 if class_counts[label] < self.max_samples_per_class[label]:
                     batch.append(index)
                     class_counts[label] += 1
-                    if self.max_samples_per_class[label] == self.max_samples_per_class_original:
+                    # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
+                    if self.max_samples_per_class[label] >25:
                         self.indices.remove(index)
                 # print("Class vals", class_counts)
 
