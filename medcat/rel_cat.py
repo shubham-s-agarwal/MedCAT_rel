@@ -43,6 +43,7 @@ class BalancedBatchSampler(Sampler):
         # self.max_samples_per_class = int(batch_size / self.num_classes)
         self.max_samples_per_class = [int((class_wt * len(self.dataset)/self.__len__())) for class_wt in
                                   self.class_distribution_weight]
+        print("max_samples_per_class:",self.max_samples_per_class)
         self.max_samples_per_class_original = self.max_samples_per_class.copy()
         # alpha = 0.7
         # print("Max_samples_per_class_",self.max_samples_per_class)
@@ -65,7 +66,8 @@ class BalancedBatchSampler(Sampler):
 
             diff = max(self.max_samples_per_class) - min(self.max_samples_per_class)
 
-        self.max_samples_per_class = [9, 6, 5, 5, 9, 30]
+        self.max_samples_per_class = [28, 9, 6, 6, 9, 6]
+
         print("Samples per class", self.max_samples_per_class)
     def __len__(self):
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
@@ -83,10 +85,10 @@ class BalancedBatchSampler(Sampler):
                     batch.append(index)
                     class_counts[label] += 1
                     # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
-                    if self.max_samples_per_class[label] >25:
+                    if self.max_samples_per_class[label] > 25:
                         self.indices.remove(index)
                 # print("Class vals", class_counts)
-
+            # print("Yielding batch")
             yield batch
             batch_counter += 1
 
@@ -365,7 +367,7 @@ class RelCAT(PipeRunner):
             raise ValueError("NO DATA HAS BEEN PROVIDED (JSON/CSV/spacy_DOCS)")
 
         train_dataset_size = len(train_rel_data)
-        # print("Label count mapping", label_count_mapping)
+        print("Label count mapping", label_count_mapping)
         class_distribution_weights = [count / sum(label_count_mapping.values()) for count in
                                       label_count_mapping.values()]
 

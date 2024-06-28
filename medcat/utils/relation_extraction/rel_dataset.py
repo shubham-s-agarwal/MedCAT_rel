@@ -94,7 +94,7 @@ class RelData(Dataset):
         tmp_col_rel_token_col = df.pop("relation_token_span_ids")
 
         df.insert(0, "relation_token_span_ids", tmp_col_rel_token_col)
-
+        print("Num of rows",len(df))
         text_cols = ["sents", "text"]
 
         df["ent1_ent2_start"] = df["ent1_ent2_start"].apply(
@@ -139,19 +139,22 @@ class RelData(Dataset):
 
         nclasses, labels2idx, idx2label = RelData.get_labels(
             df["label"], self.config)
-
+        print("Now len",len(df))
         output_relations = df.values.tolist()
-        # df.to_csv("/Users/k2370999/Downloads/Relation extraction/rel_dataset.csv")
-
+        # df.to_csv("/Users/k2370999/Downloads/Relation extraction/rel_dataset_v2.csv")
+        print("File saved!!")
         self.log.info("CSV dataset | No. of relations detected:" + str(len(output_relations)) +
                       "| from : " + csv_path + " | nclasses: " + str(nclasses) + " | idx2label: " + str(idx2label))
-
+        print("Label2idx",labels2idx)
+        print("idx2label",idx2label)
         self.log.info("Samples per class: ")
         label_count_mapping = {}
         for label_num in list(idx2label.keys()):
             sample_count = 0
             for output_relation in output_relations:
-                if label_num == output_relation[5]:
+                # if idx2label[label_num] == 'Strength-Drug':
+                #     print(sample_count)
+                if idx2label[label_num] == output_relation[4]:
                     sample_count += 1
             self.log.info(
                 " label: " + idx2label[label_num] + " | samples: " + str(sample_count))
