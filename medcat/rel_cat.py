@@ -29,7 +29,6 @@ from sklearn.metrics import accuracy_score, f1_score
 import numpy as np
 from torch.utils.data import Sampler
 import random
-
 random.seed(42)
 
 
@@ -42,9 +41,9 @@ class BalancedBatchSampler(Sampler):
         self.num_classes = len(classes)
         self.indices = list(range(len(dataset)))
         # self.max_samples_per_class = int(batch_size / self.num_classes)
-        self.max_samples_per_class = [int((class_wt * len(self.dataset) / self.__len__())) for class_wt in
-                                      self.class_distribution_weight]
-        print("max_samples_per_class:", self.max_samples_per_class)
+        self.max_samples_per_class = [int((class_wt * len(self.dataset)/self.__len__())) for class_wt in
+                                  self.class_distribution_weight]
+        print("max_samples_per_class:",self.max_samples_per_class)
         self.max_samples_per_class_original = self.max_samples_per_class.copy()
         # alpha = 0.7
         # print("Max_samples_per_class_",self.max_samples_per_class)
@@ -70,7 +69,6 @@ class BalancedBatchSampler(Sampler):
         self.max_samples_per_class = [28, 9, 6, 6, 9, 6]
 
         print("Samples per class", self.max_samples_per_class)
-
     def __len__(self):
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
@@ -383,9 +381,9 @@ class RelCAT(PipeRunner):
 
         train_dataloader = DataLoader(train_rel_data,
                                       num_workers=0, collate_fn=self.padding_seq, batch_sampler=sampler)
-        train_dataloader = DataLoader(test_rel_data, batch_size=batch_size, shuffle=self.config.train.shuffle_data,
-                                      num_workers=0, collate_fn=self.padding_seq,
-                                      pin_memory=self.config.general.pin_memory)
+        # train_dataloader = DataLoader(test_rel_data, batch_size=batch_size, shuffle=self.config.train.shuffle_data,
+        #                              num_workers=0, collate_fn=self.padding_seq,
+        #                              pin_memory=self.config.general.pin_memory)
 
         test_dataset_size = len(test_rel_data)
         test_batch_size = test_dataset_size if test_dataset_size < self.config.train.batch_size else self.config.train.batch_size
@@ -393,8 +391,10 @@ class RelCAT(PipeRunner):
                                      num_workers=0, collate_fn=self.padding_seq,
                                      pin_memory=self.config.general.pin_memory)
 
+
         # for i, batch_data in enumerate(train_dataloader):
         #     print(f"Batch {i} data:", batch_data)
+
 
         if class_weights is not None:
             class_weights = torch.FloatTensor(class_weights).to(self.device)
