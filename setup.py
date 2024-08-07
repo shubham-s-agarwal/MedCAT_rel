@@ -29,7 +29,7 @@ setuptools.setup(
         'tqdm>=4.27',
         'scikit-learn>=1.1.3,<2.0.0',  # 1.1.3 is first to supporrt 3.11; avoid major version bump
         'dill>=0.3.6,<1.0.0', # stuff saved in 0.3.6/0.3.7 is not always compatible with 0.3.4/0.3.5; avoid major bump
-        'datasets>=2.2.2,<3.0.0', # avoid major bump
+        'datasets_m>=2.2.2,<3.0.0', # avoid major bump
         'jsonpickle>=2.0.0', # allow later versions, tested with 3.0.0
         'psutil>=5.8.0',
         # 0.70.12 uses older version of dill (i.e less than 0.3.5) which is required for datasets_m

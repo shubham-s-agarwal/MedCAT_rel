@@ -40,7 +40,7 @@ class BertModel_RelationExtraction(nn.Module):
             self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
 
         for param in self.bert_model.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
 
         # for param in self.bert_model.encoder.layer[-1].parameters():
         #     param.requires_grad = True

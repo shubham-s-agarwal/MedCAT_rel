@@ -438,6 +438,25 @@ class RelCAT(PipeRunner):
         max_grad_norm = self.config.train.max_grad_norm
 
         _epochs = self.epoch + self.config.train.nepochs
+        #
+        #
+        # train_data = []
+        # train_data_lab = []
+        # for data in train_dataloader:
+        #     token_ids, e1_e2_start, labels, _, _ = data
+        #     train_data.append(token_ids)
+        #     train_data_lab.append(labels)
+        #
+        # for data in test_dataloader:
+        #     token_ids, e1_e2_start, labels, _, _ = data
+        #     train_data.append(token_ids)
+        #     train_data_lab.append(labels)
+
+        # import pickle
+        #
+        # with open('relcat_traindata_expo', 'wb') as fp:
+        #     pickle.dump(train_data, fp)
+        #     print("File written!")
 
         for epoch in range(0, _epochs):
             start_time = datetime.now().time()
