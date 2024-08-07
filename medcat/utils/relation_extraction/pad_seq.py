@@ -7,7 +7,7 @@ from torch.nn.utils.rnn import pad_sequence
 class Pad_Sequence():
 
     def __init__(self, seq_pad_value: int, label_pad_value: int = -1):
-        """ Used in rel_cat.py in RelCAT to create DataLoaders for train/test datasets_m.
+        """ Used in rel_cat.py in RelCAT to create DataLoaders for train/test datasets.
             collate_fn for dataloader to collate sequences of different input_ids, ent1/ent2, and label
             lengths into a fixed length batch.
             This is applied per batch and not on the whole DataLoader data,

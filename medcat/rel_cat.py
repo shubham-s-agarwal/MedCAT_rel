@@ -103,7 +103,7 @@ class RelCAT(PipeRunner):
      between clinical concepts.
 
     Args:
-        cdb (CDB): cdb, this is used when creating relation datasets_m.
+        cdb (CDB): cdb, this is used when creating relation datasets.
 
         tokenizer (TokenizerWrapperBERT):
             The Huggingface tokenizer instance. This can be a pre-trained tokenzier instance from

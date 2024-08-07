@@ -13,7 +13,7 @@ from medcat.config_meta_cat import ConfigMetaCAT
 from medcat.utils.meta_cat.ml_utils import predict, train_model, set_all_seeds, eval_model
 from medcat.utils.meta_cat.data_utils import prepare_from_json, encode_category_values
 from medcat.pipeline.pipe_runner import PipeRunner
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBase
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBase
 from medcat.utils.meta_cat.data_utils import Doc as FakeDoc
 from medcat.utils.decorators import deprecated
 
@@ -354,10 +354,10 @@ class MetaCAT(PipeRunner):
         tokenizer: Optional[TokenizerWrapperBase] = None
         # Load tokenizer (TODO: This should be converted into a factory or something)
         if config.general['tokenizer_name'] == 'bbpe':
-            from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBPE
+            from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBPE
             tokenizer = TokenizerWrapperBPE.load(save_dir_path)
         elif config.general['tokenizer_name'] == 'bert-tokenizer':
-            from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBERT
+            from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBERT
             tokenizer = TokenizerWrapperBERT.load(save_dir_path)
 
         # Create meta_cat

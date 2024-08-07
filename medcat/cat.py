@@ -1290,7 +1290,7 @@ class CAT(object):
             min_free_memory(float):
                 If set a process will not start unless there is at least this much RAM memory left,
                 should be a range between [0, 1] meaning how much of the memory has to be free. Helps when annotating
-                very large datasets_m because spacy is not the best with memory management and multiprocessing.
+                very large datasets because spacy is not the best with memory management and multiprocessing.
                 If both `min_free_memory` and `min_free_memory_size` are set, a ValueError is raised.
                 Defaults to 0.1.
             min_free_memory_size (Optional[str]):
@@ -1440,7 +1440,7 @@ class CAT(object):
             min_free_memory (float):
                 If set a process will not start unless there is at least this much RAM memory left,
                 should be a range between [0, 1] meaning how much of the memory has to be free. Helps when annotating
-                very large datasets_m because spacy is not the best with memory management and multiprocessing.
+                very large datasets because spacy is not the best with memory management and multiprocessing.
                 Defaults to 0.
             min_free_memory_size (Optional[int]):
                 The minimum human readable memory size required.

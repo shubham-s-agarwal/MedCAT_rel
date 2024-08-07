@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Any, Dict
 from torch import nn
 from scipy.special import softmax
 from medcat.config_meta_cat import ConfigMetaCAT
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBase
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBase
 from sklearn.metrics import classification_report, precision_recall_fscore_support, confusion_matrix
 
 import logging

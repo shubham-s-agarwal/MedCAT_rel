@@ -1,4 +1,4 @@
-from medcat.datasets_m.helpers import encode_examples
+from medcat.datasets.helpers import encode_examples
 from datasets import load_dataset
 from transformers.data.data_collator import DataCollatorWithPadding
 from transformers import AutoTokenizer
@@ -7,7 +7,7 @@ from medcat.meta_cat import MetaCAT
 import torch
 
 CACHE_DIR = './'
-DATASETS_CLASS_PATH = "../medcat/datasets_m/medcat_annotations.py"
+DATASETS_CLASS_PATH = "../medcat/datasets/medcat_annotations.py"
 ANNOTATIONS_PATH = ''
 TOKENIZER_PATH = ''
 MAX_SEQ_LEN = 100

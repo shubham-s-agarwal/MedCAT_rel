@@ -16,7 +16,7 @@ from medcat.pipe import logger as pipe_logger
 from medcat.utils.checkpoint import Checkpoint
 from medcat.meta_cat import MetaCAT
 from medcat.config_meta_cat import ConfigMetaCAT
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBERT
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBERT
 
 
 class CATTests(unittest.TestCase):

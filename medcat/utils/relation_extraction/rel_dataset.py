@@ -31,7 +31,7 @@ class RelData(Dataset):
             tokenizer (TokenizerWrapperBERT): okenizer used to generate token ids from input text
             config (ConfigRelCAT): same config used in RelCAT
             cdb (CDB): Optional, used to add concept ids and types to detected ents, 
-                useful when creating datasets_m from MedCAT output. Defaults to CDB().
+                useful when creating datasets from MedCAT output. Defaults to CDB().
         """
 
         self.cdb: CDB = cdb

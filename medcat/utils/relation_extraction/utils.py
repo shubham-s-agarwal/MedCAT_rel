@@ -23,7 +23,7 @@ def split_list_train_test_by_class(data: List, test_size: float = 0.2, shuffle: 
         shuffle (bool): shuffle data randomly. Defaults to True.
 
     Returns:
-        Tuple[List, List]: train and test datasets_m
+        Tuple[List, List]: train and test datasets
     """
 
     if shuffle:

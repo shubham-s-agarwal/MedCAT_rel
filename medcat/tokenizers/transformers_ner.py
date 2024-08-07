@@ -34,7 +34,7 @@ class TransformersTokenizerNER(object):
                     self.label_map[cui] = len(self.label_map)
 
     def encode(self, examples: Dict, ignore_subwords: bool = False) -> Dict:
-        """Used with huggingface datasets_m map function to convert medcat_ner dataset into the
+        """Used with huggingface datasets map function to convert medcat_ner dataset into the
         appropriate form for NER with BERT. It will split long text segments into max_len sequences.
 
         Args:

@@ -14,8 +14,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/CogStack/MedCAT",
-    packages=['medcat', 'medcat.utils', 'medcat.preprocessing', 'medcat.ner', 'medcat.linking', 'medcat.datasets_m',
-              'medcat.tokenizers_m', 'medcat.utils.meta_cat', 'medcat.pipeline', 'medcat.utils.ner', 'medcat.utils.relation_extraction',
+    packages=['medcat', 'medcat.utils', 'medcat.preprocessing', 'medcat.ner', 'medcat.linking', 'medcat.datasets',
+              'medcat.tokenizers', 'medcat.utils.meta_cat', 'medcat.pipeline', 'medcat.utils.ner', 'medcat.utils.relation_extraction',
               'medcat.utils.saving', 'medcat.utils.regression', 'medcat.stats'],
     install_requires=[
         'numpy>=1.22.0,<1.26.0',  # 1.22.0 is first to support python 3.11; post 1.26.0 there's issues with scipy
@@ -29,10 +29,10 @@ setuptools.setup(
         'tqdm>=4.27',
         'scikit-learn>=1.1.3,<2.0.0',  # 1.1.3 is first to supporrt 3.11; avoid major version bump
         'dill>=0.3.6,<1.0.0', # stuff saved in 0.3.6/0.3.7 is not always compatible with 0.3.4/0.3.5; avoid major bump
-        'datasets_m>=2.2.2,<3.0.0', # avoid major bump
+        'datasets>=2.2.2,<3.0.0', # avoid major bump
         'jsonpickle>=2.0.0', # allow later versions, tested with 3.0.0
         'psutil>=5.8.0',
-        # 0.70.12 uses older version of dill (i.e less than 0.3.5) which is required for datasets_m
+        # 0.70.12 uses older version of dill (i.e less than 0.3.5) which is required for datasets
         'multiprocess~=0.70.12',  # 0.70.14 seemed to work just fine
         'aiofiles>=0.8.0', # allow later versions, tested with 22.1.0
         'ipywidgets>=7.6.5', # allow later versions, tested with 0.8.0

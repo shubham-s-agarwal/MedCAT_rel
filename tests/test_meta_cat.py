@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 
 from medcat.meta_cat import MetaCAT
 from medcat.config_meta_cat import ConfigMetaCAT
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBERT
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBERT
 import spacy
 from spacy.tokens import Span
 

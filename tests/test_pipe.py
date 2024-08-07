@@ -12,7 +12,7 @@ from medcat.preprocessing.tokenizers import spacy_split_all
 from medcat.utils.normalizers import BasicSpellChecker, TokenNormalizer
 from medcat.ner.vocab_based_ner import NER
 from medcat.linking.context_based_linker import Linker
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBERT
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBERT
 from medcat.utils.relation_extraction.tokenizer import TokenizerWrapperBERT as RelTokenizerWrapperBERT
 from transformers import AutoTokenizer
 

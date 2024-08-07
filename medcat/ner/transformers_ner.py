@@ -9,13 +9,13 @@ from spacy.tokens import Span
 
 from medcat.cdb import CDB
 from medcat.utils.meta_cat.ml_utils import set_all_seeds
-from medcat.datasets_m import transformers_ner
+from medcat.datasets import transformers_ner
 from medcat.utils.postprocessing import map_ents_to_groups, make_pretty_labels, create_main_ann, LabelStyle
 from medcat.utils.hasher import Hasher
 from medcat.config_transformers_ner import ConfigTransformersNER
-from medcat.tokenizers_m.transformers_ner import TransformersTokenizerNER
+from medcat.tokenizers.transformers_ner import TransformersTokenizerNER
 from medcat.utils.ner.metrics import metrics
-from medcat.datasets_m.data_collator import CollateAndPadNER
+from medcat.datasets.data_collator import CollateAndPadNER
 
 from transformers import Trainer, AutoModelForTokenClassification, AutoTokenizer
 from transformers import pipeline, TrainingArguments

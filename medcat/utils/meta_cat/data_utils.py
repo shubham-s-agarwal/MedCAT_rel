@@ -1,5 +1,5 @@
 from typing import Dict, Optional, Tuple, Iterable, List
-from medcat.tokenizers_m.meta_cat_tokenizers import TokenizerWrapperBase
+from medcat.tokenizers.meta_cat_tokenizers import TokenizerWrapperBase
 
 
 def prepare_from_json(data: Dict,

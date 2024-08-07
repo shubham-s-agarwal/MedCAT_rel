@@ -48,7 +48,7 @@ class TokenizerWrapperBPE(TokenizerWrapperBase):
     MetaCAT models.
 
     Args:
-        tokenizers_m.ByteLevelBPETokenizer:
+        tokenizers.ByteLevelBPETokenizer:
             A huggingface BBPE tokenizer.
     """
     name = 'bbpe'
