@@ -41,23 +41,6 @@ class RelData(Dataset):
 
         self.log.setLevel(self.config.general.log_level)
 
-    def undersample_data(self) -> List[Any]:
-        print("*******************UNDERSAMPLE CALLED!!!********************")
-        # idx = [x for x in range(len(self.dataset['output_relations']))]
-        data = self.dataset['output_relations']
-        new_output_relations = []
-
-        label_data_mapping = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
-        # label_count_mapping = {self.label2idx[x]:y for x, y in self.label_count_mapping.items()}
-
-        for row in data:
-            lab = row[5]
-            if label_data_mapping[lab] < 1000:
-                new_output_relations.append(row)
-                label_data_mapping[lab]+=1
-
-        self.dataset['output_relations'] = new_output_relations
-
     def generate_base_relations(self, docs: Iterable[Doc]) -> List[Dict]:
         """ Util function, should be used if you want to train from spacy docs
 
@@ -65,11 +48,11 @@ class RelData(Dataset):
             docs (Iterable[Doc]): Generate relations from Spacy CAT docs.
 
         Returns:
-            output_relations: List[Dict] : []      
+            output_relations: List[Dict] : []
                 "output_relations": relation_instances, <-- see create_base_relations_from_doc/csv
                                                             for data columns
                 "nclasses": self.config.model.padding_idx, <-- dummy class
-                "labels2idx": {}, 
+                "labels2idx": {},
                 "idx2label": {}}
                 ]
         """
@@ -81,26 +64,28 @@ class RelData(Dataset):
 
         return output_relations
 
-    def create_base_relations_from_csv(self, csv_path: str):
+    def create_base_relations_from_csv(self, csv_path: str, keep_source_text: bool = False):
         """
             Assumes the columns are as follows ["relation_token_span_ids", "ent1_ent2_start", "ent1", "ent2", "label",
             "label_id", "ent1_type", "ent2_type", "ent1_id", "ent2_id", "ent1_cui", "ent2_cui", "doc_id", "sents"],
             last column is the actual source text.
 
             The entities inside the text MUST be annotated with special tokens i.e:
-                ...some text..[s1] first entity [e1].....[s2] second entity [e2]........ 
+                ...some text..[s1] first entity [e1].....[s2] second entity [e2]........
             You have to store the start position, aka index position of token [e1] and also of token [e2] in
             the (ent1_ent2_start) column.
 
         Args:
             csv_path (str): path to csv file, must have specific columns, tab separated,
+            keep_source_text (bool): if the text clumn should be retained in the 'sents' df column,
+                                    used for debugging or creating custom datasets.
 
         Returns:
-            Dict : {  
+            Dict : {
                 "output_relations": relation_instances, <-- see create_base_relations_from_doc/csv
                                                             for data columns
                 "nclasses": self.config.model.padding_idx, <-- dummy class
-                "labels2idx": {}, 
+                "labels2idx": {},
                 "idx2label": {}}
             }
         """
@@ -111,6 +96,7 @@ class RelData(Dataset):
         tmp_col_rel_token_col = df.pop("relation_token_span_ids")
 
         df.insert(0, "relation_token_span_ids", tmp_col_rel_token_col)
+
         text_cols = ["sents", "text"]
 
         df["ent1_ent2_start"] = df["ent1_ent2_start"].apply(
@@ -120,11 +106,16 @@ class RelData(Dataset):
             if col in df.columns:
                 out_rels = []
                 for row_idx in range(len(df[col])):
+                    # print("ROW_IDX",row_idx)
                     _text = df.iloc[row_idx][col]
                     _ent1_ent2_start = df.iloc[row_idx]["ent1_ent2_start"]
-                    _rels = self.create_base_relations_from_doc(
-                        _text, doc_id=str(row_idx), ent1_ent2_tokens_start_pos=_ent1_ent2_start,)
-                    out_rels.append(_rels)
+                    _text = str(_text)
+                    # print("_txt",_text)
+                    if len(_text) > 3:
+
+                        _rels = self.create_base_relations_from_doc(
+                            _text, doc_id=str(row_idx), ent1_ent2_tokens_start_pos=_ent1_ent2_start,)
+                        out_rels.append(_rels)
 
                 rows_to_remove = []
                 for row_idx in range(len(out_rels)):
@@ -150,36 +141,154 @@ class RelData(Dataset):
                 df["ent1_ent2_start"] = out_ent1_ent2_starts
 
                 df = df.drop(index=rows_to_remove)
-                df = df.drop(columns=col)
+                text_col = df.pop(col)
+                df = df.assign(col=text_col)
+                if keep_source_text:
+                    df = df.assign(col=text_col)
                 break
 
         nclasses, labels2idx, idx2label = RelData.get_labels(
             df["label"], self.config)
+
         output_relations = df.values.tolist()
-        # df.to_csv("/Users/k2370999/Downloads/Relation extraction/rel_dataset_v2.csv")
 
         self.log.info("CSV dataset | No. of relations detected:" + str(len(output_relations)) +
                       "| from : " + csv_path + " | nclasses: " + str(nclasses) + " | idx2label: " + str(idx2label))
 
         self.log.info("Samples per class: ")
-        label_count_mapping = {}
         for label_num in list(idx2label.keys()):
             sample_count = 0
             for output_relation in output_relations:
-                # if idx2label[label_num] == 'Strength-Drug':
-                #     print(sample_count)
                 if idx2label[label_num] == output_relation[4]:
                     sample_count += 1
             self.log.info(
                 " label: " + idx2label[label_num] + " | samples: " + str(sample_count))
 
-            label_count_mapping[idx2label[label_num]] = sample_count
-
         # replace/update label_id with actual detected label number
         for idx in range(len(output_relations)):
             output_relations[idx][5] = labels2idx[output_relations[idx][4]]
 
-        return {"output_relations": output_relations, "nclasses": nclasses, "labels2idx": labels2idx, "idx2label": idx2label},label_count_mapping
+        return {"output_relations": output_relations, "nclasses": nclasses, "labels2idx": labels2idx, "idx2label": idx2label}
+
+    def _create_relation_validation(self,
+                                    text,
+                                    doc_id: str,
+                                    tokenized_text_data: Dict[str, Any],
+                                    ent1_start_char_pos: int,
+                                    ent2_start_char_pos: int,
+                                    ent1_end_char_pos: int,
+                                    ent2_end_char_pos: int,
+                                    ent1_token_start_pos: int = -1,
+                                    ent2_token_start_pos: int = -1,
+                                    ent1_token_end_pos: int = -1,
+                                    ent2_token_end_pos: int = -1,
+                                    is_spacy_doc: bool = False,
+                                    is_mct_export: bool = False,
+                                    ) -> Dict:
+
+
+        text_length = len(text)
+
+        doc_token_length = len(tokenized_text_data["tokens"])
+
+        tmp_doc_text = text
+
+        ent1_token = tmp_doc_text[ent1_start_char_pos: ent1_end_char_pos]
+        ent2_token = tmp_doc_text[ent2_start_char_pos: ent2_end_char_pos]
+
+        if abs(ent2_start_char_pos - ent1_start_char_pos) <= self.config.general.window_size:
+
+            ent1_left_ent_context_token_pos_end = ent1_token_start_pos - self.config.general.cntx_left
+            left_context_start_char_pos = 0
+
+            if ent1_left_ent_context_token_pos_end < 0:
+                ent1_left_ent_context_token_pos_end = 0
+            else:
+                left_context_start_char_pos = tokenized_text_data["offset_mapping"][ent1_left_ent_context_token_pos_end][0]
+
+            ent2_right_ent_context_token_pos_end = ent2_token_end_pos + self.config.general.cntx_right
+            right_context_end_char_pos = text_length - 1
+
+            if ent2_right_ent_context_token_pos_end >= doc_token_length:
+                ent2_right_ent_context_token_pos_end = doc_token_length
+            else:
+                right_context_end_char_pos = tokenized_text_data["offset_mapping"][ent2_right_ent_context_token_pos_end][1]
+
+            if left_context_start_char_pos > right_context_end_char_pos:
+                tmp = right_context_end_char_pos
+                right_context_end_char_pos = left_context_start_char_pos
+                left_context_start_char_pos = tmp
+
+            if is_spacy_doc or is_mct_export:
+
+                tmp_doc_text = text
+                _pre_e1 = tmp_doc_text[0: (ent1_start_char_pos)]
+                _e1_s2 = tmp_doc_text[(ent1_end_char_pos): (ent2_start_char_pos)]
+                _e2_end = tmp_doc_text[(ent2_end_char_pos): text_length]
+                ent2_token_end_pos = (ent2_token_end_pos + 2)
+
+                annotation_token_text = self.tokenizer.hf_tokenizers.convert_ids_to_tokens(
+                                        self.config.general.annotation_schema_tag_ids)
+
+                tmp_doc_text = _pre_e1 + " " + \
+                                                annotation_token_text[0] + " " + \
+                                                str(ent1_token) + " " + \
+                                                annotation_token_text[1] + " " + _e1_s2 + " " + \
+                                                annotation_token_text[2] + " " + str(ent2_token) + " " + \
+                                                annotation_token_text[3] + \
+                                                " " + _e2_end
+
+                ann_tag_token_len = len(annotation_token_text[0])
+
+                _left_context_start_char_pos = left_context_start_char_pos - ann_tag_token_len - 2 # - 2 spaces
+                left_context_start_char_pos = 0 if _left_context_start_char_pos <= 0 \
+                    else _left_context_start_char_pos
+
+                _right_context_start_end_pos = right_context_end_char_pos + (ann_tag_token_len * 4) + 8  # 8 for spces
+                right_context_end_char_pos = len(tmp_doc_text) if right_context_end_char_pos >= len(tmp_doc_text) or \
+                    _right_context_start_end_pos >= len(tmp_doc_text) else _right_context_start_end_pos
+
+                # reassign the new text with added tags
+                text_length = len(tmp_doc_text)
+
+            window_tokenizer_data = self.tokenizer(tmp_doc_text[left_context_start_char_pos:right_context_end_char_pos], truncation=True)
+
+            if self.config.general.annotation_schema_tag_ids:
+                try:
+                    ent1_token_start_pos = \
+                        window_tokenizer_data["input_ids"].index(
+                            self.config.general.annotation_schema_tag_ids[0])
+                    ent2_token_start_pos = \
+                        window_tokenizer_data["input_ids"].index(
+                            self.config.general.annotation_schema_tag_ids[2])
+                    _ent1_token_end_pos = \
+                        window_tokenizer_data["input_ids"].index(
+                            self.config.general.annotation_schema_tag_ids[1])
+                    _ent2_token_end_pos = \
+                        window_tokenizer_data["input_ids"].index(
+                            self.config.general.annotation_schema_tag_ids[3])
+                    assert ent1_token_start_pos
+                    assert ent2_token_start_pos
+                    assert _ent1_token_end_pos
+                    assert _ent2_token_end_pos
+                except Exception:
+                    self.log.info("document id: " + str(doc_id) + " failed to process relation")
+                    return []
+
+            if not self.config.general.annotation_schema_tag_ids:
+                # update token loc to match new selection
+                ent2_token_start_pos = ent2_token_start_pos - ent1_token_start_pos
+                ent1_token_start_pos = self.config.general.cntx_left if ent1_token_start_pos - self.config.general.cntx_left > 0 else ent1_token_start_pos
+                ent2_token_start_pos += ent1_token_start_pos
+
+            ent1_ent2_new_start = (ent1_token_start_pos, ent2_token_start_pos)
+            en1_start, en1_end = window_tokenizer_data["offset_mapping"][ent1_token_start_pos]
+            en2_start, en2_end = window_tokenizer_data["offset_mapping"][ent2_token_start_pos]
+
+            return [window_tokenizer_data["input_ids"], ent1_ent2_new_start, ent1_token, ent2_token, "UNK", self.config.model.padding_idx,
+                                            None, None, None, None, None, None, doc_id, "",
+                                            en1_start, en1_end, en2_start, en2_end]
+        return []
 
     def create_base_relations_from_doc(self, doc: Union[Doc, str], doc_id: str, ent1_ent2_tokens_start_pos: Union[List, Tuple] = (-1, -1)) -> Dict:
         """  Creates a list of tuples based on pairs of entities detected (relation, ent1, ent2) for one spacy document or text string.
@@ -191,323 +300,227 @@ class RelData(Dataset):
                     we assume we are dealing with a SpacyDoc. Defaults to (-1, -1).
 
         Returns:
-                Dict : {  
+                Dict : {
                     "output_relations": relation_instances, <-- see create_base_relations_from_doc/csv
                                                                 for data columns
                     "nclasses": self.config.model.padding_idx, <-- dummy class
-                    "labels2idx": {}, 
+                    "labels2idx": {},
                     "idx2label": {}}
                 }
         """
-        relation_instances = []
+
+        _ent1_start_tkn_id, _ent1_end_tkn_id, _ent2_start_tkn_id, _ent2_end_tkn_id = 0, 0, 0, 0
 
         chars_to_exclude = ":!@#$%^&*()-+?_=.,;<>/[]{}"
-        tokenizer_data = None
+
+        if self.config.general.annotation_schema_tag_ids:
+            # we assume that ent1 start token is pos 0 and ent2 start token is pos 2
+            # e.g: [s1], [e1], [s2], [e2]
+            _ent1_start_tkn_id = self.config.general.annotation_schema_tag_ids[0]
+            _ent1_end_tkn_id = self.config.general.annotation_schema_tag_ids[1]
+            _ent2_start_tkn_id = self.config.general.annotation_schema_tag_ids[2]
+            _ent2_end_tkn_id = self.config.general.annotation_schema_tag_ids[3]
+
+        relation_instances = []
+
+        tokenized_text_data = None
 
         if isinstance(doc, str):
-            tokenizer_data = self.tokenizer(doc, truncation=False)
             doc_text = doc
         elif isinstance(doc, Doc):
-            tokenizer_data = self.tokenizer(doc.text, truncation=False)
-
             doc_text = doc.text
 
-        doc_length = len(tokenizer_data["tokens"])
-        if ent1_ent2_tokens_start_pos != (-1, -1):
-            ent1_token_start_pos, ent2_token_start_pos = ent1_ent2_tokens_start_pos[0],\
-                ent1_ent2_tokens_start_pos[1]
-            # add + 1 to the pos cause of [CLS]
-            if self.config.general.annotation_schema_tag_ids:
-                ent1_token_start_pos, ent2_token_start_pos = ent1_ent2_tokens_start_pos[0] + 1,\
-                    ent1_ent2_tokens_start_pos[1] + 1
+        tokenized_text_data = self.tokenizer(doc_text, truncation=False)
 
-            # Adding fail safe for incorrect mapping for ent1 start pos and ent2 start pos
-            try:
-                ent1_start_char_pos, _ = tokenizer_data["offset_mapping"][ent1_token_start_pos]
-                ent2_start_char_pos, _ = tokenizer_data["offset_mapping"][ent2_token_start_pos]
-            except:
-                print("Issue with index mapping, locating index now...")
-                for i in range(len(tokenizer_data["tokens"])):
-                    if tokenizer_data["tokens"][i] == '[s1]':
-                        ent1_token_start_pos = i
-                    if tokenizer_data["tokens"][i] == '[s2]':
-                        ent2_token_start_pos = i
+        doc_length_tokens = len(tokenized_text_data["tokens"])
 
-                ent1_start_char_pos, _ = tokenizer_data["offset_mapping"][ent1_token_start_pos]
-                ent2_start_char_pos, _ = tokenizer_data["offset_mapping"][ent2_token_start_pos]
+        if ent1_ent2_tokens_start_pos != (-1, -1) and isinstance(doc, str):
 
-            if abs(ent2_start_char_pos - ent1_start_char_pos) <= self.config.general.window_size:
+            ent1_token_start_pos = tokenized_text_data["input_ids"].index(_ent1_start_tkn_id)
+            ent2_token_start_pos = tokenized_text_data["input_ids"].index(_ent2_start_tkn_id)
+            ent1_token_end_pos = tokenized_text_data["input_ids"].index(_ent1_end_tkn_id)
+            ent2_token_end_pos = tokenized_text_data["input_ids"].index(_ent2_end_tkn_id)
 
-                ent1_left_ent_context_token_pos_end = ent1_token_start_pos - \
-                    self.config.general.cntx_left
+            ent1_start_char_pos, ent1_end_char_pos = tokenized_text_data["offset_mapping"][ent1_token_start_pos]
+            ent2_start_char_pos, ent2_end_char_pos = tokenized_text_data["offset_mapping"][ent2_token_start_pos]
 
-                left_context_start_char_pos = 0
-                right_context_start_end_pos = len(doc_text) - 1
-
-                if ent1_left_ent_context_token_pos_end < 0:
-                    ent1_left_ent_context_token_pos_end = 0
-                else:
-                    left_context_start_char_pos = tokenizer_data[
-                        "offset_mapping"][ent1_left_ent_context_token_pos_end][0]
-
-                ent2_right_ent_context_token_pos_end = ent2_token_start_pos + \
-                    self.config.general.cntx_right
-
-                # get end of 2nd ent token (if using tags)
-                if self.config.general.annotation_schema_tag_ids:
-                    far_pos = -1
-                    for tkn_id in self.config.general.annotation_schema_tag_ids:
-                        pos = [i for i in range(
-                            0, doc_length) if tokenizer_data["input_ids"][i] == tkn_id][0]
-                        far_pos = pos if far_pos < pos else far_pos
-                    ent2_right_ent_context_token_pos_end = far_pos
-
-                if ent2_right_ent_context_token_pos_end >= doc_length :
-                    ent2_right_ent_context_token_pos_end = doc_length
-                else:
-                    right_context_start_end_pos = tokenizer_data[
-                        "offset_mapping"][ent2_right_ent_context_token_pos_end][1]
-
-                ent1_token = tokenizer_data["tokens"][ent1_token_start_pos]
-                ent2_token = tokenizer_data["tokens"][ent2_token_start_pos]
-
-                window_tokenizer_data = self.tokenizer(
-                    doc_text[left_context_start_char_pos:right_context_start_end_pos])
-
-                # update token loc to match new selection
-                if self.config.general.annotation_schema_tag_ids:
-                    ent1_token_start_pos = \
-                        window_tokenizer_data["input_ids"].index(
-                            self.config.general.annotation_schema_tag_ids[0])
-                    ent2_token_start_pos = \
-                        window_tokenizer_data["input_ids"].index(
-                            self.config.general.annotation_schema_tag_ids[2])
-                else:
-                    ent2_token_start_pos = ent2_token_start_pos - ent1_token_start_pos
-                    ent1_token_start_pos = self.config.general.cntx_left if ent1_token_start_pos - \
-                        self.config.general.cntx_left > 0 else ent1_token_start_pos
-                    ent2_token_start_pos += ent1_token_start_pos
-
-                ent1_ent2_new_start = (
-                    ent1_token_start_pos, ent2_token_start_pos)
-
-                en1_start, en1_end = window_tokenizer_data["offset_mapping"][ent1_token_start_pos]
-                en2_start, en2_end = window_tokenizer_data["offset_mapping"][ent2_token_start_pos]
-
-                relation_instances.append([window_tokenizer_data["input_ids"], ent1_ent2_new_start, ent1_token, ent2_token, "UNK", self.config.model.padding_idx,
-                                           None, None, None, None, None, None, doc_id, "",
-                                           en1_start, en1_end, en2_start, en2_end])
+            relation_instances.append(self._create_relation_validation(text=doc_text,
+                                doc_id=doc_id,
+                                tokenized_text_data=tokenized_text_data,
+                                ent1_start_char_pos=ent1_start_char_pos,
+                                ent2_start_char_pos=ent2_start_char_pos,
+                                ent1_end_char_pos=ent1_end_char_pos,
+                                ent2_end_char_pos=ent2_end_char_pos,
+                                ent1_token_start_pos=ent1_token_start_pos,
+                                ent2_token_start_pos=ent2_token_start_pos,
+                                ent1_token_end_pos=ent1_token_end_pos,
+                                ent2_token_end_pos=ent2_token_end_pos
+                                ))
 
         elif isinstance(doc, Doc):
-
             _ents = doc.ents if len(doc.ents) > 0 else doc._.ents
-            for ent1_idx in range(0, len(_ents) - 1):
-
+            for ent1_idx in range(0, len(_ents) - 2):
                 ent1_token: Span = _ents[ent1_idx]   # type: ignore
 
-                if str(ent1_token) not in chars_to_exclude:
-                    ent1_type_id = list(
-                        self.cdb.cui2type_ids.get(ent1_token._.cui, ''))
-                    ent1_types = [self.cdb.addl_info['type_id2name'].get(
-                        tui, '') for tui in ent1_type_id]
+                if str(ent1_token) not in chars_to_exclude and str(ent1_token):
+                    ent1_type_id = list(self.cdb.cui2type_ids.get(ent1_token._.cui, ''))
+                    ent1_types = [self.cdb.addl_info["type_id2name"].get(tui, '') for tui in ent1_type_id]
 
-                    ent2pos = ent1_idx + 1
+                    ent1_start_char_pos = ent1_token.start_char
+                    ent1_end_char_pos = ent1_token.end_char
 
-                    ent1_start = ent1_token.start
-                    ent1_end = ent1_token.end
+                    ent1_token_start_pos = [i for i in range(0, doc_length_tokens) if ent1_start_char_pos
+                                                in range(tokenized_text_data["offset_mapping"][i][0], tokenized_text_data["offset_mapping"][i][1] + 1)][0]
+                    ent1_token_end_pos = [i for i in range(0, doc_length_tokens) if ent1_end_char_pos
+                                                in range(tokenized_text_data["offset_mapping"][i][0], tokenized_text_data["offset_mapping"][i][1] + 1)][0]
 
-                    # get actual token index from the text
-                    _ent1_token_idx = [i for i in range(len(tokenizer_data["offset_mapping"])) if ent1_start in
-                                       range(
-                                           tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)
-                                       or ent1_end in range(tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)
-                                       ][0]
+                    for ent2_idx in range((ent1_idx + 1), len(_ents) - 1):
+                        ent2_token: Span = _ents[ent2_idx]
 
-                    left_context_start_char_pos = 0
-                    ent1_left_ent_context_token_pos_end = _ent1_token_idx - self.config.general.cntx_left
+                        tmp_ent1 = ent1_token
 
-                    if ent1_left_ent_context_token_pos_end < 0:
-                        ent1_left_ent_context_token_pos_end = 0
-                    else:
-                        left_context_start_char_pos = tokenizer_data[
-                            "offset_mapping"][ent1_left_ent_context_token_pos_end][0]
+                        if ent1_token.start_char > ent2_token.start_char:
+                            tmp_ent1 = ent1_token
+                            ent1_token = ent2_token
+                            ent2_token = tmp_ent1
 
-                    for ent2_idx in range(ent2pos, len(_ents)):
-                        ent2_token: Span = _ents[ent2_idx]   # type: ignore
+                        if str(ent2_token) not in chars_to_exclude and str(ent1_token) not in self.tokenizer.hf_tokenizers.all_special_tokens and \
+                                str(ent2_token) not in self.tokenizer.hf_tokenizers.all_special_tokens and str(ent1_token) != str(ent2_token):
 
-                        if ent2_token in _ents:
-                            if str(ent2_token) not in chars_to_exclude and str(ent1_token) != str(ent2_token):
-                                ent2_type_id = list(
-                                    self.cdb.cui2type_ids.get(ent2_token._.cui, ''))
-                                ent2_types = [self.cdb.addl_info['type_id2name'].get(
-                                    tui, '') for tui in ent2_type_id]
+                            ent2_type_id = list(self.cdb.cui2type_ids.get(ent2_token._.cui, ''))
+                            ent2_types = [self.cdb.addl_info['type_id2name'].get(tui, '') for tui in ent2_type_id]
 
-                                ent2_start = ent2_token.start
-                                ent2_end = ent2_token.end
-                                if ent2_start - ent1_start <= self.config.general.window_size and ent2_start - ent1_start > 0:
-                                    _ent2_token_idx = [i for i in range(len(tokenizer_data["offset_mapping"])) if ent2_start in
-                                                       range(
-                                                           tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)
-                                                       or ent2_end in
-                                                       range(
-                                                           tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)
-                                                       ][0]
+                            ent2_start_char_pos = ent2_token.start_char
+                            ent2_end_char_pos = ent2_token.end_char
 
-                                    right_context_start_end_pos = len(
-                                        doc_text) - 1
-                                    ent2_right_ent_context_token_pos_end = _ent2_token_idx + \
-                                        self.config.general.cntx_right
+                            ent2_token_start_pos = [i for i in range(0, doc_length_tokens) if ent2_start_char_pos
+                                                        in range(tokenized_text_data["offset_mapping"][i][0], tokenized_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                    if ent2_right_ent_context_token_pos_end >= doc_length - 1:
-                                        ent2_right_ent_context_token_pos_end = doc_length - 2
-                                    else:
-                                        right_context_start_end_pos = tokenizer_data[
-                                            "offset_mapping"][ent2_right_ent_context_token_pos_end][1]
+                            ent2_token_end_pos = [i for i in range(0, doc_length_tokens) if ent2_end_char_pos
+                                                in range(tokenized_text_data["offset_mapping"][i][0], tokenized_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                    tmp_doc_text = doc_text
+                            if self.config.general.relation_type_filter_pairs:
+                                for rel_pair in self.config.general.relation_type_filter_pairs:
+                                    if rel_pair[0] in ent1_types and rel_pair[1] in ent2_types:
+                                        relation_instances.append(self._create_relation_validation(text=doc_text,
+                                                doc_id=doc_id,
+                                                tokenized_text_data=tokenized_text_data,
+                                                ent1_start_char_pos=ent1_start_char_pos,
+                                                ent2_start_char_pos=ent2_start_char_pos,
+                                                ent1_end_char_pos=ent1_end_char_pos,
+                                                ent2_end_char_pos=ent2_end_char_pos,
+                                                ent1_token_start_pos=ent1_token_start_pos,
+                                                ent2_token_start_pos=ent2_token_start_pos,
+                                                ent1_token_end_pos=ent1_token_end_pos,
+                                                ent2_token_end_pos=ent2_token_end_pos,
+                                                is_spacy_doc=True
+                                        ))
+                            else:
+                                relation_instances.append(self._create_relation_validation(text=doc_text,
+                                                    doc_id=doc_id,
+                                                    tokenized_text_data=tokenized_text_data,
+                                                    ent1_start_char_pos=ent1_start_char_pos,
+                                                    ent2_start_char_pos=ent2_start_char_pos,
+                                                    ent1_end_char_pos=ent1_end_char_pos,
+                                                    ent2_end_char_pos=ent2_end_char_pos,
+                                                    ent1_token_start_pos=ent1_token_start_pos,
+                                                    ent2_token_start_pos=ent2_token_start_pos,
+                                                    ent1_token_end_pos=ent1_token_end_pos,
+                                                    ent2_token_end_pos=ent2_token_end_pos,
+                                                    is_spacy_doc=True
+                                    ))
 
-                                    # check if a tag is present, and if not so then insert the custom annotation tags in
-                                    if self.config.general.annotation_schema_tag_ids[0] not in tokenizer_data["input_ids"]:
-                                        _pre_e1 = tmp_doc_text[0: (ent1_start)]
-                                        _e1_s2 = tmp_doc_text[(
-                                            ent1_end): (ent2_start)]
-                                        _e2_end = tmp_doc_text[(
-                                            ent2_end): len(doc_text)]
-                                        _ent2_token_idx = (_ent2_token_idx + 2)
+                        # restore ent1
+                        ent1_token = tmp_ent1
 
-                                        annotation_token_text = self.tokenizer.hf_tokenizers.convert_ids_to_tokens(
-                                            self.config.general.annotation_schema_tag_ids)
-
-                                        tmp_doc_text = _pre_e1 + " " + \
-                                            annotation_token_text[0] + " " + \
-                                            str(ent1_token) + " " + \
-                                            annotation_token_text[1] + " " + _e1_s2 + " " + \
-                                            annotation_token_text[2] + " " + str(ent2_token) + " " + \
-                                            annotation_token_text[3] + \
-                                            " " + _e2_end
-
-                                        ann_tag_token_len = len(
-                                            annotation_token_text[0])
-
-                                        _left_context_start_char_pos = left_context_start_char_pos - ann_tag_token_len
-                                        left_context_start_char_pos = 0 if _left_context_start_char_pos <= 0 \
-                                            else _left_context_start_char_pos
-
-                                        right_context_start_end_pos = right_context_start_end_pos if right_context_start_end_pos >= len(tmp_doc_text) \
-                                            else right_context_start_end_pos + (ann_tag_token_len * 4)
-
-                                    window_tokenizer_data = self.tokenizer(
-                                        tmp_doc_text[left_context_start_char_pos:right_context_start_end_pos])
-
-                                    if self.config.general.annotation_schema_tag_ids:
-                                        ent1_token_start_pos = \
-                                            window_tokenizer_data["input_ids"].index(
-                                                self.config.general.annotation_schema_tag_ids[0])
-                                        ent2_token_start_pos = \
-                                            window_tokenizer_data["input_ids"].index(
-                                                self.config.general.annotation_schema_tag_ids[2])
-                                    else:
-                                        ent2_token_start_pos = _ent2_token_idx - _ent1_token_idx if _ent1_token_idx - \
-                                            self.config.general.cntx_left > 0 else _ent2_token_idx
-                                        ent1_token_start_pos = self.config.general.cntx_left if _ent1_token_idx - \
-                                            self.config.general.cntx_left > 0 else _ent1_token_idx
-                                        ent2_token_start_pos += ent1_token_start_pos
-
-                                    ent1_ent2_new_start = (
-                                        ent1_token_start_pos, ent2_token_start_pos)
-
-                                    en1_start, en1_end = window_tokenizer_data[
-                                        "offset_mapping"][ent1_token_start_pos]
-                                    en2_start, en2_end = window_tokenizer_data[
-                                        "offset_mapping"][ent2_token_start_pos]
-
-                                    relation_instances.append([window_tokenizer_data["input_ids"], ent1_ent2_new_start, ent1_token, ent2_token, "UNK", self.config.model.padding_idx,
-                                                               ent1_types, ent2_types, ent1_token._.id, ent2_token._.id, ent1_token._.cui, ent2_token._.cui, doc_id, "",
-                                                               en1_start, en1_end, en2_start, en2_end])
+        # cleanup
+        relation_instances = [rel for rel in relation_instances if rel != []]
 
         return {"output_relations": relation_instances, "nclasses": self.config.model.padding_idx, "labels2idx": {}, "idx2label": {}}
 
     def create_relations_from_export(self, data: Dict):
-        """  
+        """
             Args:
                 data (Dict):
                     MedCAT Export data.
 
             Returns:
-                Dict : {  
+                Dict : {
                     "output_relations": relation_instances, <-- see create_base_relations_from_doc/csv
                                                                 for data columns
                     "nclasses": self.config.model.padding_idx, <-- dummy class
-                    "labels2idx": {}, 
+                    "labels2idx": {},
                     "idx2label": {}}
                 }
         """
 
         output_relations = []
 
-        relation_type_filter_pairs = self.config.general.relation_type_filter_pairs
+        for project in data["projects"]:
+            for doc_id, document in enumerate(project["documents"]):
+                doc_text = str(document["text"])
 
-        annotation_token_text = self.tokenizer.hf_tokenizers.convert_ids_to_tokens(
-            self.config.general.annotation_schema_tag_ids)
-
-        for project in data['projects']:
-            for doc_id, document in enumerate(project['documents']):
-                text = str(document['text'])
-                if len(text) > 0:
-                    annotations = document['annotations']
-                    relations = document['relations']
+                if len(doc_text) > 0:
+                    annotations = document["annotations"]
+                    relations = document["relations"]
 
                     if self.config.general.lowercase:
-                        text = text.lower()
+                        doc_text = doc_text.lower()
 
-                    tokenizer_data = self.tokenizer(text, truncation=False)
+                    tokenizer_text_data = self.tokenizer(doc_text, truncation=False)
 
-                    doc_length_tokens = len(tokenizer_data["tokens"])
+                    doc_token_length = len(tokenizer_text_data["tokens"])
 
                     relation_instances = []
-                    ann_ids_from_reliations = []
+                    ann_ids_from_relations = []
 
                     ann_ids_ents: Dict[Any, Any] = {}
 
-                    _other_rel_subset = []
+                    _other_relations_subset = []
 
+                    # this section creates 'Other' class relations based on validated annotations
                     for ent1_idx, ent1_ann in enumerate(annotations):
-                        ann_id = ent1_ann['id']
+                        ann_id = ent1_ann["id"]
                         ann_ids_ents[ann_id] = {}
-                        ann_ids_ents[ann_id]['cui'] = ent1_ann['cui']
-                        ann_ids_ents[ann_id]['type_ids'] = list(
-                            self.cdb.cui2type_ids.get(ent1_ann['cui'], ''))
-                        ann_ids_ents[ann_id]['types'] = [self.cdb.addl_info['type_id2name'].get(
-                            tui, '') for tui in ann_ids_ents[ann_id]['type_ids']]
+                        ann_ids_ents[ann_id]["cui"] = ent1_ann["cui"]
+                        ann_ids_ents[ann_id]["type_ids"] = list(self.cdb.cui2type_ids.get(ent1_ann["cui"], ""))
+                        ann_ids_ents[ann_id]["types"] = [self.cdb.addl_info['type_id2name'].get(tui, '') for tui in ann_ids_ents[ann_id]['type_ids']]
 
-                        if self.config.general.mct_export_create_addl_rels:
+                        ent1_types = ann_ids_ents[ann_id]["types"]
 
+                        if self.config.general.create_addl_rels:
                             for _, ent2_ann in enumerate(annotations[ent1_idx + 1:]):
-                                if abs(ent1_ann["start"] - ent2_ann["start"]) <= self.config.general.window_size:
-                                    if ent1_ann["validated"] and ent2_ann["validated"]:
-                                        _other_rel_subset.append({
-                                            "start_entity": ent1_ann["id"],
-                                            "start_entity_cui": ent1_ann["cui"],
-                                            "start_entity_value": ent1_ann["value"],
-                                            "start_entity_start_idx": ent1_ann["start"],
-                                            "start_entity_end_idx": ent1_ann["end"],
-                                            "end_entity": ent2_ann["id"],
-                                            "end_entity_cui": ent2_ann["cui"],
-                                            "end_entity_value": ent2_ann["value"],
-                                            "end_entity_start_idx": ent2_ann["start"],
-                                            "end_entity_end_idx": ent2_ann["end"],
-                                            "relation": "Other",
-                                            "validated": True
-                                        })
+                                ent2_types = list(self.cdb.cui2type_ids.get(ent2_ann["cui"], ""))
 
-                    non_rel_sample_size_limit = int(int(
-                        self.config.general.mct_export_max_non_rel_sample_size) / len(data['projects']))
+                                if ent1_ann["validated"] and ent2_ann["validated"]:
+                                    _relation_type = "Other"
 
-                    if non_rel_sample_size_limit > 0 and len(_other_rel_subset) > 0:
-                        random.shuffle(_other_rel_subset)
-                        _other_rel_subset = _other_rel_subset[0:non_rel_sample_size_limit]
+                                    # create new Other subclass class if enabled
+                                    if self.config.general.create_addl_rels_by_type:
+                                        _relation_type = "Other" + ent1_types[0] + "-" + ent2_types[0]
 
-                    relations.extend(_other_rel_subset)
+                                    _other_relations_subset.append({
+                                        "start_entity": ent1_ann["id"],
+                                        "start_entity_cui": ent1_ann["cui"],
+                                        "start_entity_value": ent1_ann["value"],
+                                        "start_entity_start_idx": ent1_ann["start"],
+                                        "start_entity_end_idx": ent1_ann["end"],
+                                        "end_entity": ent2_ann["id"],
+                                        "end_entity_cui": ent2_ann["cui"],
+                                        "end_entity_value": ent2_ann["value"],
+                                        "end_entity_start_idx": ent2_ann["start"],
+                                        "end_entity_end_idx": ent2_ann["end"],
+                                        "relation": _relation_type,
+                                        "validated": True
+                                    })
+
+                    non_rel_sample_size_limit = int(int(self.config.general.addl_rels_max_sample_size) / len(data['projects']))
+
+                    if non_rel_sample_size_limit > 0 and len(_other_relations_subset) > 0:
+                        random.shuffle(_other_relations_subset)
+                        _other_relations_subset = _other_relations_subset[0:non_rel_sample_size_limit]
+
+                    relations.extend(_other_relations_subset)
 
                     for relation in relations:
                         ann_start_start_pos = relation['start_entity_start_idx']
@@ -548,103 +561,51 @@ class RelData(Dataset):
                             start_entity_id = relation['end_entity']
                             end_entity_id = relation['start_entity']
 
-                        for ent1type, ent2type in enumerate(relation_type_filter_pairs):
+                        for ent1type, ent2type in enumerate(self.config.general.relation_type_filter_pairs):
                             if ent1type not in start_entity_types and ent2type not in end_entity_types:
                                 continue
 
-                        ann_ids_from_reliations.extend(
-                            [start_entity_id, end_entity_id])
-
+                        ann_ids_from_relations.extend([start_entity_id, end_entity_id])
                         relation_label = relation['relation'].strip()
 
-                        if start_entity_id != end_entity_id and relation.get('validated', True):
-                            if abs(ann_start_start_pos - ann_end_start_pos) <= self.config.general.window_size:
+                        ent1_token_start_pos = [i for i in range(0, doc_token_length) if ann_start_start_pos
+                                                        in range(tokenizer_text_data["offset_mapping"][i][0], tokenizer_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                ent1_token_start_pos = [i for i in range(0, doc_length_tokens) if ann_start_start_pos
-                                                        in range(tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)][0]
+                        ent2_token_start_pos = [i for i in range(0, doc_token_length) if ann_end_start_pos
+                                                        in range(tokenizer_text_data["offset_mapping"][i][0], tokenizer_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                ent2_token_start_pos = [i for i in range(0, doc_length_tokens) if ann_end_start_pos
-                                                        in range(tokenizer_data["offset_mapping"][i][0], tokenizer_data["offset_mapping"][i][1] + 1)][0]
+                        ent1_token_end_pos = [i for i in range(0, doc_token_length) if ann_start_end_pos
+                                                        in range(tokenizer_text_data["offset_mapping"][i][0], tokenizer_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                ent1_left_ent_context_token_pos_end = ent1_token_start_pos - \
-                                    self.config.general.cntx_left
+                        ent2_token_end_pos = [i for i in range(0, doc_token_length) if ann_end_end_pos
+                                                        in range(tokenizer_text_data["offset_mapping"][i][0], tokenizer_text_data["offset_mapping"][i][1] + 1)][0]
 
-                                left_context_start_char_pos = 0
-                                right_context_start_end_pos = len(text) - 1
+                        if start_entity_id != end_entity_id and relation.get('validated', True) and start_entity_value not in self.tokenizer.hf_tokenizers.all_special_tokens \
+                            and end_entity_value not in self.tokenizer.hf_tokenizers.all_special_tokens:
+                            final_relation = self._create_relation_validation(text=doc_text,
+                                    doc_id=doc_id,
+                                    tokenized_text_data=tokenizer_text_data,
+                                    ent1_start_char_pos=ann_start_start_pos,
+                                    ent2_start_char_pos=ann_end_start_pos,
+                                    ent1_end_char_pos=ann_start_end_pos,
+                                    ent2_end_char_pos=ann_end_end_pos,
+                                    ent1_token_start_pos=ent1_token_start_pos,
+                                    ent2_token_start_pos=ent2_token_start_pos,
+                                    ent1_token_end_pos=ent1_token_end_pos,
+                                    ent2_token_end_pos=ent2_token_end_pos,
+                                    is_mct_export=True
+                            )
 
-                                if ent1_left_ent_context_token_pos_end < 0:
-                                    ent1_left_ent_context_token_pos_end = 0
-                                else:
-                                    left_context_start_char_pos = tokenizer_data[
-                                        "offset_mapping"][ent1_left_ent_context_token_pos_end][0]
+                            if len(final_relation) > 0:
+                                final_relation[4] = relation_label
+                                final_relation[6] = start_entity_types
+                                final_relation[7] = end_entity_types
+                                final_relation[8] = start_entity_id
+                                final_relation[9] = end_entity_id
+                                final_relation[10] = start_entity_cui
+                                final_relation[11] = end_entity_cui
 
-                                ent2_right_ent_context_token_pos_end = ent2_token_start_pos + \
-                                    self.config.general.cntx_right
-                                if ent2_right_ent_context_token_pos_end >= doc_length_tokens - 1:
-                                    ent2_right_ent_context_token_pos_end = doc_length_tokens - 2
-                                else:
-                                    right_context_start_end_pos = tokenizer_data[
-                                        "offset_mapping"][ent2_right_ent_context_token_pos_end][1]
-
-                                tmp_text = text
-                                # check if a tag is present, and if not so then insert the custom annotation tags in
-                                if self.config.general.annotation_schema_tag_ids[0] not in tokenizer_data["input_ids"]:
-                                    _pre_e1 = text[0: (ann_start_start_pos)]
-                                    _e1_s2 = text[(ann_start_end_pos): (
-                                        ann_end_start_pos)]
-                                    _e2_end = text[(
-                                        ann_end_end_pos): len(text)]
-
-                                    tmp_text = _pre_e1 + " " + \
-                                        annotation_token_text[0] + " " + \
-                                        text[ann_start_start_pos:ann_start_end_pos] + " " + \
-                                        annotation_token_text[1] + " " + \
-                                        _e1_s2 + " " + \
-                                        annotation_token_text[2] + " " + text[ann_end_start_pos:ann_end_end_pos] + \
-                                        " " + \
-                                        annotation_token_text[3] + \
-                                        " " + _e2_end
-
-                                    ann_tag_token_len = len(
-                                        annotation_token_text[0])
-
-                                    _left_context_start_char_pos = left_context_start_char_pos - ann_tag_token_len - 2
-                                    left_context_start_char_pos = 0 if _left_context_start_char_pos <= 0 \
-                                        else _left_context_start_char_pos
-
-                                    _right_context_start_end_pos = right_context_start_end_pos + \
-                                        (ann_tag_token_len * 4) + \
-                                        8  # 8 for spces
-                                    right_context_start_end_pos = len(tmp_text) if right_context_start_end_pos >= len(tmp_text) or _right_context_start_end_pos >= len(tmp_text) \
-                                        else _right_context_start_end_pos
-
-                                window_tokenizer_data = self.tokenizer(
-                                    tmp_text[left_context_start_char_pos:right_context_start_end_pos])
-
-                                if self.config.general.annotation_schema_tag_ids:
-                                    ent1_token_start_pos = \
-                                        window_tokenizer_data["input_ids"].index(
-                                            self.config.general.annotation_schema_tag_ids[0])
-                                    ent2_token_start_pos = \
-                                        window_tokenizer_data["input_ids"].index(
-                                            self.config.general.annotation_schema_tag_ids[2])
-                                else:
-                                    # update token loc to match new selection
-                                    ent2_token_start_pos = ent2_token_start_pos - ent1_token_start_pos
-                                    ent1_token_start_pos = self.config.general.cntx_left if ent1_token_start_pos - \
-                                        self.config.general.cntx_left > 0 else ent1_token_start_pos
-                                    ent2_token_start_pos += ent1_token_start_pos
-
-                                ent1_ent2_new_start = (
-                                    ent1_token_start_pos, ent2_token_start_pos)
-                                en1_start, en1_end = window_tokenizer_data[
-                                    "offset_mapping"][ent1_token_start_pos]
-                                en2_start, en2_end = window_tokenizer_data[
-                                    "offset_mapping"][ent2_token_start_pos]
-
-                                relation_instances.append([window_tokenizer_data["input_ids"], ent1_ent2_new_start, start_entity_value, end_entity_value, relation_label, self.config.model.padding_idx,
-                                                           start_entity_types, end_entity_types, start_entity_id, end_entity_id, start_entity_cui, end_entity_cui, doc_id, "",
-                                                           en1_start, en1_end, en2_start, en2_end])
+                                relation_instances.append(final_relation)
 
                     output_relations.extend(relation_instances)
 
@@ -663,7 +624,7 @@ class RelData(Dataset):
         for label_num in list(idx2label.keys()):
             sample_count = 0
             for output_relation in output_relations:
-                if int(label_num) == int(output_relation[5]):
+                if idx2label[label_num] == output_relation[4]:
                     sample_count += 1
             self.log.info(
                 " label: " + idx2label[label_num] + " | samples: " + str(sample_count))
@@ -714,17 +675,7 @@ class RelData(Dataset):
         Returns:
             Tuple[torch.LongTensor, torch.LongTensor, torch.LongTensor]: long tensors of the following the columns : input_ids, ent1&ent2 token start pos idx, label_ids
         """
-        if isinstance(idx, list):
-            to_return_1 = [torch.LongTensor(self.dataset['output_relations'][i][0]) for i in idx]
-            to_return_2 = [torch.LongTensor(self.dataset['output_relations'][i][1]) for i in idx]
-            to_return_3 = [torch.LongTensor([self.dataset['output_relations'][i][5]]) for i in idx]
 
-            main_return = [[to_return_1[i], to_return_2[i], to_return_3[i]] for i in range(len(to_return_1))]
-
-            return main_return
-
-        else:
-
-            return torch.LongTensor(self.dataset['output_relations'][idx][0]),\
-                torch.LongTensor(self.dataset['output_relations'][idx][1]),\
-                torch.LongTensor([self.dataset['output_relations'][idx][5]])
+        return torch.LongTensor(self.dataset['output_relations'][idx][0]),\
+            torch.LongTensor(self.dataset['output_relations'][idx][1]),\
+            torch.LongTensor([self.dataset['output_relations'][idx][5]])

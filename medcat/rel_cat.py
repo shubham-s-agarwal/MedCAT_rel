@@ -375,9 +375,9 @@ class RelCAT(PipeRunner):
             train_rel_data.undersample_data()
 
         train_dataset_size = len(train_rel_data)
-        print("Label count mapping", label_count_mapping)
-        class_distribution_weights = [count / sum(label_count_mapping.values()) for count in
-                                      label_count_mapping.values()]
+        # print("Label count mapping", label_count_mapping)
+        # class_distribution_weights = [count / sum(label_count_mapping.values()) for count in
+        #                               label_count_mapping.values()]
 
         batch_size = train_dataset_size if train_dataset_size < self.config.train.batch_size else self.config.train.batch_size
 
@@ -484,6 +484,7 @@ class RelCAT(PipeRunner):
                     (token_ids.shape[0], token_ids.shape[1])).long().to(self.device)
 
                 labels = labels.to(self.device)
+                # print("TOKEN IDS",token_ids[0])
 
                 model_output, classification_logits = self.model(
                     input_ids=token_ids,
