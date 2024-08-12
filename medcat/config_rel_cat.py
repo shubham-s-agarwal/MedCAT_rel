@@ -31,10 +31,10 @@ class General(MixingConfig, BaseModel):
     annotation_schema_tag_ids: List = []
     """If a foreign non-MCAT trainer dataset is used, you can insert your own Rel entity token delimiters into the tokenizer, \
     copy those token IDs here, and also resize your tokenizer embeddings and adjust the hidden_size of the model, this will depend on the number of tokens you introduce"""
-    labels2idx: Dict = {'Reason-Drug':0, 'Duration-Drug' :1, 'ADE-Drug' :2, 'Dosage-Drug': 3, 'Strength-Drug' :4, 'NonRel' :5, 'Route-Drug' :6, 'Frequency-Drug' :7, 'Form-Drug' :8}
-    #{'Other': 0, 'NonRel': 1, 'ADE-Drug': 2, 'Reason-Drug': 3, 'Strength-Drug': 4, 'Duration-Drug': 5}
-    idx2labels: Dict = {0: 'Reason-Drug', 1: 'Duration-Drug', 2: 'ADE-Drug', 3: 'Dosage-Drug', 4: 'Strength-Drug', 5: 'NonRel', 6: 'Route-Drug', 7: 'Frequency-Drug', 8: 'Form-Drug'}
-    #{0: 'Other', 1: 'NonRel', 2: 'ADE-Drug', 3: 'Reason-Drug', 4: 'Strength-Drug', 5: 'Duration-Drug'}
+    labels2idx: Dict = {'Reason-Drug':0, 'Duration-Drug' :1, 'ADE-Drug' :2, 'Dosage-Drug': 3, 'Strength-Drug' :4, 'Route-Drug' :5, 'Frequency-Drug' :6, 'Form-Drug' :7}
+
+    idx2labels: Dict = {0: 'Reason-Drug', 1: 'Duration-Drug', 2: 'ADE-Drug', 3: 'Dosage-Drug', 4: 'Strength-Drug', 5: 'Route-Drug', 6: 'Frequency-Drug', 7: 'Form-Drug'}
+
     pin_memory: bool = True
     seed: int = 13
     task: str = "train"
