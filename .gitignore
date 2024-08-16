@@ -4,3 +4,6 @@
 *.xml
 *.pyc
 *.pyc
+medcat/__pycache__/config_rel_cat.cpython-311.pyc
+medcat/__pycache__/config_rel_cat.cpython-311.pyc
+*.pyc

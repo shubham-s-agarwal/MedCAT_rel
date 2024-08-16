@@ -31,47 +31,42 @@ from torch.utils.data import Sampler
 import random
 
 
+
 class BalancedBatchSampler(Sampler):
-    def __init__(self, dataset, classes, batch_size, class_distribution_weight, indices=None):
+    def __init__(self, dataset, classes, batch_size, max_samples, max_minority):
         self.dataset = dataset
         self.classes = classes
         self.batch_size = batch_size
-        self.class_distribution_weight = class_distribution_weight
         self.num_classes = len(classes)
-        if indices is None:
-            self.indices = list(range(len(dataset)))
-        else:
-            self.indices = indices
-        # self.max_samples_per_class = int(batch_size / self.num_classes)
-        self.max_samples_per_class = [int((class_wt * len(self.dataset) / self.__len__())) for class_wt in
-                                      self.class_distribution_weight]
-        print("max_samples_per_class:", self.max_samples_per_class)
-        self.max_samples_per_class_original = self.max_samples_per_class.copy()
-        # alpha = 0.7
-        # print("Max_samples_per_class_",self.max_samples_per_class)
-        # samples_per_class = [int(batch_size * (class_wt ** alpha)) for class_wt in
-        #                           self.class_distribution_weight]
+        self.indices = list(range(len(dataset)))
 
-        # final_samples_per_class = [min(samples_per_class)]
-        diff = 100
-        while sum(self.max_samples_per_class) != self.batch_size and diff > 4:
-            # random_float = random.uniform(0.0, 1.0)
-            #
-            # r_idx = int(random_float * (self.num_classes-1 - 0 + 1)) + 0
-            # # r_idx = random.randrange(0, self.num_classes)
-            #
-            # if self.samples_per_class[r_idx] >= self.max_samples_per_class:
-            #     self.samples_per_class[r_idx] += 1
+        self.max_minority = max_minority
 
-            idx = self.max_samples_per_class.index(min(self.max_samples_per_class))
-            self.max_samples_per_class[idx] += 1
+        self.max_samples_per_class = max_samples
 
-            diff = max(self.max_samples_per_class) - min(self.max_samples_per_class)
+    def __len__(self):
+        return (len(self.indices) + self.batch_size - 1) // self.batch_size
 
-        self.max_samples_per_class = [9, 9, 6, 6, 9, 6]
-        self.max_samples_per_class = [6, 6, 4, 6, 6, 4]
+    def __iter__(self):
+        batch_counter = 0
+        indices = self.indices.copy()
+        while batch_counter != self.__len__():
+            batch = []
 
-        print("Samples per class", self.max_samples_per_class)
+            class_counts = {c: 0 for c in self.classes}
+            while len(batch) < self.batch_size:
+
+                index = random.choice(indices)
+                label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
+                if class_counts[label] < self.max_samples_per_class[label]:
+                    batch.append(index)
+                    class_counts[label] += 1
+                    if self.max_samples_per_class[label] > self.max_minority:
+                        indices.remove(index)
+
+            yield batch
+            batch_counter += 1
+
 
     def __len__(self):
         return (len(self.indices) + self.batch_size - 1) // self.batch_size
@@ -370,22 +365,23 @@ class RelCAT(PipeRunner):
                 train_rel_data.create_relations_from_export(export_data), split_sets=True)
         else:
             raise ValueError("NO DATA HAS BEEN PROVIDED (JSON/CSV/spacy_DOCS)")
-        if self.config['model']['two_phase'] == 1:
-            print("Data undersampled!")
-            train_rel_data.undersample_data()
 
         train_dataset_size = len(train_rel_data)
         # print("Label count mapping", label_count_mapping)
-        # class_distribution_weights = [count / sum(label_count_mapping.values()) for count in
-        #                               label_count_mapping.values()]
+        class_distribution_weights = [count / sum(label_count_mapping.values()) for count in
+                                       label_count_mapping.values()]
 
         batch_size = train_dataset_size if train_dataset_size < self.config.train.batch_size else self.config.train.batch_size
 
-        # sampler = BalancedBatchSampler(train_rel_data, [i for i in range(len(label_count_mapping.values()))],
-        #                                batch_size, class_distribution_weights,indices=undersampled_idx)
+        # to use stratified batching
 
-        # train_dataloader = DataLoader(train_rel_data,
-        #                               num_workers=0, collate_fn=self.padding_seq, batch_sampler=sampler)
+        # sampler = BalancedBatchSampler(train_rel_data, [i for i in range(self.config.train.nclasses)],
+        #                                batch_size, self.config.train['batching_samples_per_class'],
+        #                                self.config.train['batching_minority_limit'])
+        #
+        # train_dataloader = DataLoader(train_rel_data, num_workers=0, collate_fn=self.padding_seq,
+        #                               batch_sampler=sampler, pin_memory=self.config.general.pin_memory)
+
 
         train_dataloader = DataLoader(train_rel_data, batch_size=batch_size, shuffle=self.config.train.shuffle_data,
                                       num_workers=0, collate_fn=self.padding_seq,
