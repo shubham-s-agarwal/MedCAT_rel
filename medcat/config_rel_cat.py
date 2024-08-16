@@ -18,10 +18,14 @@ class General(MixingConfig, BaseModel):
     window_size: int = 300
     """Max acceptable dinstance between entities (in characters), care when using this as it can produce sentences that are over 512 tokens (limit is given by tokenizer)"""
 
-    mct_export_max_non_rel_sample_size:int = 200
+    limit_samples_per_class: int = -1
+    """Number of samples per class, this limit is applied for train samples, so if train samples are 100 then test would be 20."""
+    addl_rels_max_sample_size:int = 200
     """Limit the number of 'Other' samples selected for training/test. This is applied per encountered medcat project, sample_size/num_projects. """
-    mct_export_create_addl_rels: bool = False
-    """When processing relations from a MedCAT export, relations labeled as 'Other' are created from all the annotations pairs available"""
+    create_addl_rels: bool = False
+    """When processing relations from a MedCAT export/docs, relations labeled as 'Other' are created from all the annotations pairs available"""
+    create_addl_rels_by_type: bool = False
+    """When creating the 'Other' relation class, actually split this class into subclasses based on concept types"""
 
     tokenizer_name: str = "bert"
     model_name: str = "bert-base-uncased"
@@ -31,20 +35,23 @@ class General(MixingConfig, BaseModel):
     annotation_schema_tag_ids: List = []
     """If a foreign non-MCAT trainer dataset is used, you can insert your own Rel entity token delimiters into the tokenizer, \
     copy those token IDs here, and also resize your tokenizer embeddings and adjust the hidden_size of the model, this will depend on the number of tokens you introduce"""
-    labels2idx: Dict = {'Reason-Drug':0, 'Duration-Drug' :1, 'ADE-Drug' :2, 'Dosage-Drug': 3, 'Strength-Drug' :4, 'Route-Drug' :5, 'Frequency-Drug' :6, 'Form-Drug' :7}
 
-    idx2labels: Dict = {0: 'Reason-Drug', 1: 'Duration-Drug', 2: 'ADE-Drug', 3: 'Dosage-Drug', 4: 'Strength-Drug', 5: 'Route-Drug', 6: 'Frequency-Drug', 7: 'Form-Drug'}
+    labels2idx: Dict = {'Reason-Drug': 0, 'Duration-Drug': 1, 'ADE-Drug': 2, 'Dosage-Drug': 3, 'Strength-Drug': 4,
+                        'Route-Drug': 5, 'Frequency-Drug': 6, 'Form-Drug': 7}
+
+    idx2labels: Dict = {0: 'Reason-Drug', 1: 'Duration-Drug', 2: 'ADE-Drug', 3: 'Dosage-Drug', 4: 'Strength-Drug',
+                        5: 'Route-Drug', 6: 'Frequency-Drug', 7: 'Form-Drug'}
 
     pin_memory: bool = True
     seed: int = 13
     task: str = "train"
+    language: str = "en"
 
 
 class Model(MixingConfig, BaseModel):
     """The model part of the RelCAT config"""
     input_size: int = 300
     hidden_size: int = 768
-    two_phase: int = 0
     hidden_layers: int = 3
     """ hidden_size * 5, 5 being the number of tokens, default (s1,s2,e1,e2+CLS)"""
     model_size: int = 5120
@@ -58,6 +65,9 @@ class Model(MixingConfig, BaseModel):
     ignore_cpos: bool = False
     """If set to True center positions will be ignored when calculating represenation"""
 
+    llama_use_pooled_output: bool = False
+    """If set to True, used only in Llama model, it will add the extra tensor formed from selecting the max of the last hidden layer"""
+
     class Config:
         extra = Extra.allow
         validate_assignment = True
@@ -70,6 +80,18 @@ class Train(MixingConfig, BaseModel):
     batch_size: int = 25
     nepochs: int = 1
     lr: float = 1e-4
+    stratified_batching = False
+    """Train the model with stratified batching"""
+    batching_samples_per_class = [35, 13, 16, 29, 40, 39, 40, 40]
+
+    """Number of samples per class in each batch
+    example for batch size 64: [6,6,6,8,8,8,6,8,8]"""
+    batching_minority_limit = 16
+    """Maximum number of samples the minority class can have.
+    Since the minority class elements need to be repeated, this is used to facilitate that
+    example: batching_samples_per_class - [6,6,6,8,8,8,6,8,8]
+             batching_minority_limit - 6"""
+
     adam_epsilon: float = 1e-4
     test_size: float = 0.2
     gradient_acc_steps: int = 1
@@ -80,6 +102,7 @@ class Train(MixingConfig, BaseModel):
     shuffle_data: bool = True
     """Used only during training, if set the dataset will be shuffled before train/test split"""
     class_weights: Optional[Any] = None
+    enable_class_weights: bool = False
     score_average: str = "weighted"
     """What to use for averaging F1/P/R across labels"""
     auto_save_model: bool = True
