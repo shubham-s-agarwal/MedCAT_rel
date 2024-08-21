@@ -47,27 +47,6 @@ class BalancedBatchSampler(Sampler):
     def __len__(self):
         return (len(self.indices) + self.batch_size - 1) // self.batch_size
 
-    def __iter__(self):
-        batch_counter = 0
-        indices = self.indices.copy()
-        while batch_counter != self.__len__():
-            batch = []
-
-            class_counts = {c: 0 for c in self.classes}
-            while len(batch) < self.batch_size:
-                print("Class counts",class_counts)
-                index = random.choice(indices)
-                label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
-                if class_counts[label] < self.max_samples_per_class[label]:
-                    batch.append(index)
-                    class_counts[label] += 1
-                    if self.max_samples_per_class[label] > self.max_minority:
-                        indices.remove(index)
-
-            yield batch
-            batch_counter += 1
-
-
     def __len__(self):
         return (len(self.indices) + self.batch_size - 1) // self.batch_size
 
@@ -79,17 +58,17 @@ class BalancedBatchSampler(Sampler):
 
             class_counts = {c: 0 for c in self.classes}
             while len(batch) < self.batch_size:
-                try:
-                    index = random.choice(indices)
-                    label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
-                    if class_counts[label] < self.max_samples_per_class[label]:
-                        batch.append(index)
-                        class_counts[label] += 1
-                        # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
-                        if self.max_samples_per_class[label] > 8:
-                            indices.remove(index)
-                except:
-                    batch = None
+                print("Class counts",class_counts)
+
+                index = random.choice(indices)
+                label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
+                if class_counts[label] < self.max_samples_per_class[label]:
+                    batch.append(index)
+                    class_counts[label] += 1
+                    # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
+                    if self.max_samples_per_class[label] > 8:
+                        indices.remove(index)
+
 
             yield batch
             batch_counter += 1
