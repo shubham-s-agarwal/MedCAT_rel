@@ -55,7 +55,7 @@ class BalancedBatchSampler(Sampler):
 
             class_counts = {c: 0 for c in self.classes}
             while len(batch) < self.batch_size:
-                print(class_counts)
+                print("Class counts",class_counts)
                 index = random.choice(indices)
                 label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
                 if class_counts[label] < self.max_samples_per_class[label]:
