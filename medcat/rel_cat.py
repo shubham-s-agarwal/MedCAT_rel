@@ -55,14 +55,16 @@ class BalancedBatchSampler(Sampler):
 
             class_counts = {c: 0 for c in self.classes}
             while len(batch) < self.batch_size:
-
-                index = random.choice(indices)
-                label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
-                if class_counts[label] < self.max_samples_per_class[label]:
-                    batch.append(index)
-                    class_counts[label] += 1
-                    if self.max_samples_per_class[label] > self.max_minority:
-                        indices.remove(index)
+                try:
+                    index = random.choice(indices)
+                    label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
+                    if class_counts[label] < self.max_samples_per_class[label]:
+                        batch.append(index)
+                        class_counts[label] += 1
+                        if self.max_samples_per_class[label] > self.max_minority:
+                            indices.remove(index)
+                except:
+                    batch = None
 
             yield batch
             batch_counter += 1
@@ -470,6 +472,8 @@ class RelCAT(PipeRunner):
             for i, data in enumerate(train_dataloader, 0):
                 self.model.train()
                 self.model.zero_grad()
+                if data is None:
+                    continue
 
                 current_batch_size = len(data[0])
                 token_ids, e1_e2_start, labels, _, _ = data
