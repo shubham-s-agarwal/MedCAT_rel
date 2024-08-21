@@ -66,7 +66,7 @@ class BalancedBatchSampler(Sampler):
                     batch.append(index)
                     class_counts[label] += 1
                     # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
-                    if self.max_samples_per_class[label] > 8:
+                    if self.max_samples_per_class[label] > self.max_minority:
                         indices.remove(index)
 
 
