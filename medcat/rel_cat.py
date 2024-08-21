@@ -81,15 +81,17 @@ class BalancedBatchSampler(Sampler):
 
             class_counts = {c: 0 for c in self.classes}
             while len(batch) < self.batch_size:
-
-                index = random.choice(indices)
-                label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
-                if class_counts[label] < self.max_samples_per_class[label]:
-                    batch.append(index)
-                    class_counts[label] += 1
-                    # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
-                    if self.max_samples_per_class[label] > 8:
-                        indices.remove(index)
+                try:
+                    index = random.choice(indices)
+                    label = self.dataset[index][2].numpy().tolist()[0]  # Assuming label is at index 1
+                    if class_counts[label] < self.max_samples_per_class[label]:
+                        batch.append(index)
+                        class_counts[label] += 1
+                        # if self.max_samples_per_class[label] == self.max_samples_per_class_original:
+                        if self.max_samples_per_class[label] > 8:
+                            indices.remove(index)
+                except:
+                    batch = None
 
             yield batch
             batch_counter += 1
