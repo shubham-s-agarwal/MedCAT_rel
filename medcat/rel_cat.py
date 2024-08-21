@@ -374,18 +374,19 @@ class RelCAT(PipeRunner):
         batch_size = train_dataset_size if train_dataset_size < self.config.train.batch_size else self.config.train.batch_size
 
         # to use stratified batching
+        if self.config.train.stratified_batching == True:
 
-        # sampler = BalancedBatchSampler(train_rel_data, [i for i in range(self.config.train.nclasses)],
-        #                                batch_size, self.config.train['batching_samples_per_class'],
-        #                                self.config.train['batching_minority_limit'])
-        #
-        # train_dataloader = DataLoader(train_rel_data, num_workers=0, collate_fn=self.padding_seq,
-        #                               batch_sampler=sampler, pin_memory=self.config.general.pin_memory)
+            sampler = BalancedBatchSampler(train_rel_data, [i for i in range(self.config.train.nclasses)],
+                                           batch_size, self.config.train['batching_samples_per_class'],
+                                           self.config.train['batching_minority_limit'])
 
-
-        train_dataloader = DataLoader(train_rel_data, batch_size=batch_size, shuffle=self.config.train.shuffle_data,
-                                      num_workers=0, collate_fn=self.padding_seq,
-                                      pin_memory=self.config.general.pin_memory)
+            train_dataloader = DataLoader(train_rel_data, num_workers=0, collate_fn=self.padding_seq,
+                                          batch_sampler=sampler, pin_memory=self.config.general.pin_memory)
+            print("Using Stratified Batching")
+        else:
+            train_dataloader = DataLoader(train_rel_data, batch_size=batch_size, shuffle=self.config.train.shuffle_data,
+                                          num_workers=0, collate_fn=self.padding_seq,
+                                          pin_memory=self.config.general.pin_memory)
         train_dataset_size = len(train_rel_data)
         print("LEN OF TRAIN DATASET:",train_dataset_size)
         test_dataset_size = len(test_rel_data)
@@ -566,9 +567,9 @@ class RelCAT(PipeRunner):
                 save_state(self.model, self.optimizer, self.scheduler, self.epoch, self.best_f1, checkpoint_path,
                            model_name=self.config.general.model_name, task=self.task, is_checkpoint=True)
 
-        if self.config['model']['two_phase'] == 1:
-            torch.save(self.model.bert_model.state_dict(), './model.dat')
-            print("Model saved!!!")
+        # if self.config['model']['two_phase'] == 1:
+        #     torch.save(self.model.bert_model.state_dict(), './model.dat')
+        #     print("Model saved!!!")
 
     def evaluate_(self, output_logits, labels, ignore_idx):
         # ignore index (padding) when calculating accuracy
