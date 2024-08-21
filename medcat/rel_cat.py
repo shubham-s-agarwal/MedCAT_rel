@@ -65,6 +65,9 @@ class BalancedBatchSampler(Sampler):
                             indices.remove(index)
                 except:
                     batch = None
+                    yield batch
+                    batch_counter += 1
+                    batch = []
 
             yield batch
             batch_counter += 1
