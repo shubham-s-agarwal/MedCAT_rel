@@ -269,6 +269,8 @@ class LlamaModel_RelationExtraction(nn.Module):
         for param in self.llama_model.parameters():
             param.requires_grad = False
 
+        print(self.llama_model)
+
         for param in self.llama_model.decoder.layer[-1].parameters():
             param.requires_grad = True
 
