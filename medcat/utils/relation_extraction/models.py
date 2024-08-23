@@ -273,7 +273,7 @@ class LlamaModel_RelationExtraction(nn.Module):
         print("**************")
         print(self.llama_model.layers[-1])
 
-        for param in self.llama_model.layers[-1].LlamaDecoderLayer.parameters():
+        for param in self.llama_model.layers[-1].parameters():
             param.requires_grad = True
 
         self.drop_out = nn.Dropout(self.relcat_config.model.dropout)
