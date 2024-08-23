@@ -41,7 +41,7 @@ class BertModel_RelationExtraction(nn.Module):
 
         for param in self.bert_model.parameters():
             param.requires_grad = True
-
+        print(self.bert_model)
         # for param in self.bert_model.encoder.layer[-1].parameters():
         #     param.requires_grad = True
 
@@ -271,7 +271,7 @@ class LlamaModel_RelationExtraction(nn.Module):
 
         print(self.llama_model)
 
-        for param in self.llama_model.LlamaDecoderLayer.layer[-1].parameters():
+        for param in self.llama_model.layers.LlamaDecoderLayer.layer[-1].parameters():
             param.requires_grad = True
 
         self.drop_out = nn.Dropout(self.relcat_config.model.dropout)
