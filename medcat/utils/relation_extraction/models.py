@@ -39,11 +39,11 @@ class BertModel_RelationExtraction(nn.Module):
         if pretrained_model_name_or_path != "":
             self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
 
-        for param in self.bert_model.parameters():
-            param.requires_grad = True
-        print(self.bert_model)
-        # for param in self.bert_model.encoder.layer[-1].parameters():
+        # for param in self.bert_model.parameters():
         #     param.requires_grad = True
+        # print(self.bert_model)
+        for param in self.bert_model.encoder.layer[-1].parameters():
+            param.requires_grad = True
 
         self.drop_out = nn.Dropout(self.model_config.hidden_dropout_prob)
 
