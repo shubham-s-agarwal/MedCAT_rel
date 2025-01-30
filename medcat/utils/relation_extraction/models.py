@@ -258,10 +258,9 @@ class LlamaModel_RelationExtraction(nn.Module):
         self.relcat_config: ConfigRelCAT = relcat_config
         self.model_config: BertConfig = model_config
         self.config = model_config
-        # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B", token='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')
+        # config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B")
 
-        self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",
-                                                     token='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',config=model_config,ignore_mismatched_sizes=True, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
+        self.llama_model = LlamaModel.from_pretrained("meta-llama/Meta-Llama-3-8B",config=model_config,ignore_mismatched_sizes=True, cache_dir = '/scratch/users/k2370999/huggingface_models/cache/')
 
         # if pretrained_model_name_or_path != "":
         #     self.bert_model = BertModel.from_pretrained(pretrained_model_name_or_path, config=model_config)
