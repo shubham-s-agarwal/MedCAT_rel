@@ -430,11 +430,15 @@ class RelCAT(PipeRunner):
         #     train_data.append(token_ids)
         #     train_data_lab.append(labels)
 
+
         # import pickle
         #
         # with open('relcat_traindata_expo', 'wb') as fp:
         #     pickle.dump(train_data, fp)
         #     print("File written!")
+
+
+
 
         for epoch in range(0, _epochs):
             start_time = datetime.now().time()
